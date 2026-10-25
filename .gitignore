@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Regenerable extraction of the supplied archives
+inputs/extracted/
+
+# ngspice scratch output
+*.raw
+*.log
+ngspice_*/
+
+# Large generated artefacts (keep the folders via .gitkeep)
+data/**/*.csv
+data/**/*.parquet
+trained_models/**/*
+!**/.gitkeep

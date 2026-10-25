@@ -1,0 +1,31 @@
+2026-11-12 23:10:25  Windows-11-10.0.26300-SP0
+[PASS] Python >= 3.11  -- 3.13.14 at C:\Users\Saumya\DVD_Project\.venv\Scripts\python.exe
+[PASS] Running inside a virtual environment  -- C:\Users\Saumya\DVD_Project\.venv
+[PASS] import numpy  -- 2.5.4
+[PASS] import pandas  -- 3.1.1
+[PASS] import scipy  -- 1.18.1
+[PASS] import sklearn  -- 1.9.1
+[PASS] import matplotlib  -- 3.11.2
+[PASS] import joblib  -- 1.6.0
+[PASS] import xgboost  -- 3.4.1
+[PASS] import lightgbm  -- 4.7.0
+[PASS] import pytest  -- 9.2.0
+[PASS] Load config/project.toml  -- model=45nm_HP, VDD=1.0 V, Lmin=45 nm, test circuit=CLA3
+[PASS] Project output folders exist
+[PASS] SPICE model file found  -- C:\Users\Saumya\DVD_Project\models\45nm_HP.pm
+[PASS] Model file SHA-256 matches config  -- 9ab66a7bc4a547b2...
+[PASS] Model card 'nmos' present, BSIM4 (level 54)  -- level=54, version=4.0
+[PASS] Model card 'pmos' present, BSIM4 (level 54)  -- level=54, version=4.0
+[PASS] nmos nominal process params  -- vth0=0.46893 V, toxe=1.25e-09 m, ndep=3.24e+18 cm^-3, u0=0.054 m^2/(V*s), xj=1.4e-08 m
+[PASS] pmos nominal process params  -- vth0=-0.49158 V, toxe=1.3e-09 m, ndep=2.44e+18 cm^-3, u0=0.02 m^2/(V*s), xj=1.4e-08 m
+[PASS] ngspice executable found  -- D:\VLSI\NGSPICE\ngspice-44.2_64\Spice64\bin\ngspice_con.exe
+[PASS] Using console ngspice build  -- ngspice_con.exe
+[PASS] ngspice responds to -v  -- ngspice 44.2
+[PASS] ngspice batch simulation runs (Python -> ngspice)  -- 0.16 s
+[PASS] No simulator errors in output
+[PASS] Simulator loaded the assigned model (showmod == file)
+[PASS] NMOS OFF: currents finite and Kirchhoff sum ~ 0  -- Id=1.695e-09, Ig=-1.280e-11, Is=-1.682e-09, Ib=-1.019e-14  |sum|=3.0e-19 A
+[PASS] PMOS OFF: currents finite and Kirchhoff sum ~ 0  -- Id=-4.213e-10, Ig=5.872e-11, Is=3.625e-10, Ib=1.005e-14  |sum|=7.0e-17 A
+[PASS] Model-card override works (toxe -10% -> higher NMOS gate leakage)  -- Ig nominal=1.280e-11 A, thin oxide=8.675e-11 A
+
+ENVIRONMENT OK

@@ -1,0 +1,95 @@
+# =====================================================================
+# Central configuration: ML-Driven PVT Variation Aware Leakage Estimation
+# Every script reads this file through src/leakage/config.py.
+# Paths are relative to the project root unless absolute.
+# =====================================================================
+
+[project]
+name = "ML-Driven PVT Variation Aware Leakage Estimation"
+course = "Digital VLSI Design"
+
+# ---------------------------------------------------------------------
+# Team assignment (confirmed from the TA allocation sheet)
+#   Team: Saumya Vira, Anish Toshniwal, Shrenil Patel, Het Selarka
+# ---------------------------------------------------------------------
+[assignment]
+model_name   = "45nm_HP"   # PTM 45nm High Performance, Metal Gate / High-K / Strained-Si
+vdd_nominal  = 1.0         # V   (model card header also states nominal Vdd = 1.0 V)
+lmin         = 45e-9       # m   channel length = feature size
+test_circuit = "CLA3"      # 3-bit carry-lookahead adder
+
+[paths]
+spice_model_file   = "models/45nm_HP.pm"   # copy in use (see reports/input_inventory.md)
+spice_model_sha256 = "9ab66a7bc4a547b2f869ceaec03f0a73d90db95cf0a9bb6c581b5a31b2edc2b9"
+netlists           = "netlists"
+data               = "data"
+trained_models     = "trained_models"      # trained ML models (NOT the SPICE .pm files)
+results            = "results"
+figures            = "figures"
+reports            = "reports"
+inputs_extracted   = "inputs/extracted"
+
+[ngspice]
+# Resolution order: NGSPICE environment variable -> this path -> PATH
+# (ngspice_con / ngspice) -> common install folders.
+# ngspice_con.exe is the console build; ngspice.exe opens a GUI window.
+path      = 'D:\VLSI\NGSPICE\ngspice-44.2_64\Spice64\bin\ngspice_con.exe'
+options   = ".options gmin=1e-18 abstol=1e-18 reltol=1e-6 vntol=1e-9"   # required by the spec
+timeout_s = 3600
+workers   = 0      # parallel ngspice processes; 0 = (CPU cores - 1)
+chunk     = 200    # circuits simulated per ngspice process
+
+# ---------------------------------------------------------------------
+# Part A sampling (spec Section 4)
+# ---------------------------------------------------------------------
+[sampling]
+n_samples         = 10000
+vdd_tolerance     = 0.10            # VDD ~ U(vdd_nominal * (1 +/- 0.10))
+w_min_factor      = 1               # W ~ U(1*Lmin, 8*Lmin)
+w_max_factor      = 8
+temp_min_c        = -40.0
+temp_max_c        = 125.0
+process_params    = ["vth0", "toxe", "ndep", "u0", "xj"]
+process_tolerance = 0.10            # each ~ U(nominal * (1 +/- 0.10)), separate for NMOS/PMOS
+
+# Gate / body voltage as a fraction of the sampled VDD
+[cases.nmos_on]
+device = "nmos"
+vg_frac = 1.0
+vb_frac = 0.0
+
+[cases.nmos_off]
+device = "nmos"
+vg_frac = 0.0
+vb_frac = 0.0
+
+[cases.pmos_on]
+device = "pmos"
+vg_frac = 0.0
+vb_frac = 1.0
+
+[cases.pmos_off]
+device = "pmos"
+vg_frac = 1.0
+vb_frac = 1.0
+
+[dataset]
+columns = ["vdd", "temp", "w", "vd", "vs", "vg", "vb",
+           "vth0", "toxe", "ndep", "u0", "xj", "id", "ig", "is", "ib"]
+# Current sign convention: positive = flowing INTO the device terminal.
+
+[split]
+train = 0.70
+val   = 0.15
+test  = 0.15
+
+[gates]
+n_corners = 200
+names     = ["INV", "NAND2", "NOR2", "AND2", "OR2"]
+
+[seeds]
+global     = 2026
+data       = 1001   # Part A sampling (per-case offsets added in code)
+split      = 2002
+training   = 3003
+corners    = 4004   # Part B/C shared 200 corners

@@ -1,0 +1,16 @@
+CLA3: 36 gates, 192 transistors; ngspice 44.2; corners from data/gates/corners.csv (200)
+  [smoke] chunk 1/4  9s
+  [smoke] chunk 2/4  9s
+  [smoke] chunk 3/4  10s
+  [smoke] chunk 4/4  10s
+  [smoke] 128 sims in 10s
+  [PASS] 128 simulations == 128
+  [PASS] converged 128/128
+  [PASS] A+B correct at the outputs 128/128
+  [PASS] all 36 internal nets within 5% VDD of their logic level 128/128 (max dev 4.33e-05 VDD)
+  [PASS] leakage positive and finite
+SMOKE TEST PASSED (nominal corner leakage 1.066e-07 .. 1.307e-07 A)
+
+== full: 64 vectors (Cin = 1) x 200 corners = 12800 full-circuit simulations ==
+  [full] chunk 40/400  121s
+  [full] chunk 80/400  248s
