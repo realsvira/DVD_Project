@@ -51,6 +51,9 @@ temp_min_c        = -40.0
 temp_max_c        = 125.0
 process_params    = ["vth0", "toxe", "ndep", "u0", "xj"]
 process_tolerance = 0.10            # each ~ U(nominal * (1 +/- 0.10)), separate for NMOS/PMOS
+rng_block         = 1000            # samples per RNG block (sample k is reproducible on its own).
+                                    # NEVER change after data exists: it would change every sample.
+batch_size        = 1000            # samples per saved shard (safe to change; resume handles it)
 
 # Gate / body voltage as a fraction of the sampled VDD
 [cases.nmos_on]

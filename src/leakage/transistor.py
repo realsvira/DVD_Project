@@ -156,6 +156,7 @@ def simulate_transistors(cfg: Config, case: str, df: pd.DataFrame,
         out[col] = -res.values[vec].to_numpy()
     out["status"] = res.status.to_numpy()
     out["messages"] = [" | ".join(m) for m in res.messages]
+    out.attrs["batch_warnings"] = dict(res.batch_warnings)   # unattributed warning counts
     return out
 
 

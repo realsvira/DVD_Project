@@ -21,8 +21,12 @@ inputs/extracted/
 *.log
 ngspice_*/
 
-# Large generated artefacts (keep the folders via .gitkeep)
-data/**/*.csv
+# Generated data: the final datasets in data/transistor/*.csv ARE committed
+# (deliverable 1); intermediate shards and quick test runs are not.
+data/**/_shards/
+data/transistor_small/
+data/tmp/
+data/**/*.tmp
 data/**/*.parquet
 trained_models/**/*
 !**/.gitkeep
