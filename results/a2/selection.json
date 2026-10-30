@@ -1,0 +1,74 @@
+{
+  "transform": "asinh(I/1e-15)",
+  "selection_criterion": "mean over Id/Ig/Is/Ib of validation median relative error",
+  "models": {
+    "nmos_on": {
+      "path": "trained_models\\nmos_on.joblib",
+      "sha256": "c62e40897762335902215db0f142f8c35b3fe598b40ae8e1bbe9dcf7656552a7",
+      "algorithm": "mlp",
+      "params": {
+        "hidden": [
+          128,
+          128,
+          128
+        ],
+        "alpha": 1e-07,
+        "activation": "tanh",
+        "solver": "lbfgs",
+        "max_iter": 3000
+      },
+      "validation_score": 0.022545246321772374
+    },
+    "nmos_off": {
+      "path": "trained_models\\nmos_off.joblib",
+      "sha256": "3bf63f03c70a5b178f2eaec67140a12defd2040e926fb2e9e5a420eb7fc408b6",
+      "algorithm": "mlp",
+      "params": {
+        "hidden": [
+          128,
+          128,
+          128
+        ],
+        "alpha": 1e-05,
+        "activation": "tanh",
+        "solver": "lbfgs",
+        "max_iter": 3000
+      },
+      "validation_score": 0.015463236488158158
+    },
+    "pmos_on": {
+      "path": "trained_models\\pmos_on.joblib",
+      "sha256": "fe3383865d9c611980cdec00dfc374961898a76929605bd628471e714ac25452",
+      "algorithm": "mlp",
+      "params": {
+        "hidden": [
+          128,
+          128,
+          128
+        ],
+        "alpha": 1e-07,
+        "activation": "tanh",
+        "solver": "lbfgs",
+        "max_iter": 3000
+      },
+      "validation_score": 0.025691204416324578
+    },
+    "pmos_off": {
+      "path": "trained_models\\pmos_off.joblib",
+      "sha256": "25036a35baade4f90b4af15180b3823ded61579407c170beffd9ba10154a7d8c",
+      "algorithm": "mlp",
+      "params": {
+        "hidden": [
+          128,
+          128,
+          128
+        ],
+        "alpha": 1e-07,
+        "activation": "tanh",
+        "solver": "lbfgs",
+        "max_iter": 3000
+      },
+      "validation_score": 0.01149732269204919
+    }
+  }
+}

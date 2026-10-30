@@ -1,0 +1,33 @@
+{
+  "criterion": "mean of [original-val score, targeted-val score]; score = mean over 4 terminals of median relative error",
+  "cases": {
+    "nmos_on": {
+      "selected": "v2",
+      "v1_score": 0.15285372297078093,
+      "v2_score": 0.05258162893513883,
+      "v2_config": "v2 #1",
+      "file_sha256": "7f7a14c325bc2e19d3f0f8da17d9f32ea07febea2efe270e58accdebd39c2510"
+    },
+    "nmos_off": {
+      "selected": "v1",
+      "v1_score": 0.022159441058794353,
+      "v2_score": 0.024291800240237527,
+      "v2_config": "v2 #1",
+      "file_sha256": "3bf63f03c70a5b178f2eaec67140a12defd2040e926fb2e9e5a420eb7fc408b6"
+    },
+    "pmos_on": {
+      "selected": "v2",
+      "v1_score": 0.2326685539111367,
+      "v2_score": 0.05576404668363971,
+      "v2_config": "v2 #1",
+      "file_sha256": "ec74543f32f692233577b960f6a8b11b473f89646720192ab28c0834a1388d5f"
+    },
+    "pmos_off": {
+      "selected": "v1",
+      "v1_score": 0.016295414602125025,
+      "v2_score": 0.020929905913535447,
+      "v2_config": "v2 #2",
+      "file_sha256": "25036a35baade4f90b4af15180b3823ded61579407c170beffd9ba10154a7d8c"
+    }
+  }
+}

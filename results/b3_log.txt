@@ -1,0 +1,68 @@
+ngspice 44.2; gates: INV[mp:P180n, mn:N90n], NAND2[mpa:P180n, mpb:P180n, mna:N180n, mnb:N180n], NOR2[mpa:P360n, mpb:P360n, mna:N90n, mnb:N90n], AND2[mpa:P180n, mpb:P180n, mna:N180n, mnb:N180n, mpi:P180n, mni:N90n], OR2[mpa:P360n, mpb:P360n, mna:N90n, mnb:N90n, mpi:P180n, mni:N90n]
+== smoke: nominal corner + corner 0, all 18 gate/input cases ==
+  [smoke] INV        4 sims  failed=0  logic_ok=4/4  max power-balance err=2.1e-16  (0s)
+  [smoke] NAND2      8 sims  failed=0  logic_ok=8/8  max power-balance err=4.0e-16  (1s)
+  [smoke] NOR2       8 sims  failed=0  logic_ok=8/8  max power-balance err=7.0e-16  (2s)
+  [smoke] AND2       8 sims  failed=0  logic_ok=8/8  max power-balance err=8.6e-08  (4s)
+  [smoke] OR2        8 sims  failed=0  logic_ok=8/8  max power-balance err=2.3e-08  (6s)
+  [PASS] 36 simulations == 36 expected
+  [PASS] converged: 36/36
+  [PASS] truth table correct: 36/36
+  [PASS] power balance sources == devices (max rel err 8.6e-08 < 1e-06)
+  [PASS] leakage positive and finite
+  [PASS] unique (gate, inputs, corner)
+
+Nominal corner truth table (V) and leakage (A):
+ gate inputs     v_out       v_x    v_y      v_n1  logic_ok    i_leak     i_vdd
+  INV      0         1       NaN    NaN       NaN      True 1.951e-09 1.951e-09
+  INV      1 2.409e-06       NaN    NaN       NaN      True 9.268e-10 7.711e-10
+NAND2     00         1   0.09074    NaN       NaN      True 6.589e-10 6.589e-10
+NAND2     01         1 4.682e-06    NaN       NaN      True 3.924e-09 3.858e-09
+NAND2     10         1    0.7657    NaN       NaN      True 1.769e-09 1.769e-09
+NAND2     11 4.794e-06  2.43e-06    NaN       NaN      True 1.923e-09 1.542e-09
+ NOR2     00         1       NaN      1       NaN      True 4.444e-09 4.444e-09
+ NOR2     01 4.927e-06       NaN      1       NaN      True 2.403e-09 2.115e-09
+ NOR2     10 1.576e-06       NaN 0.2397       NaN      True 6.133e-10 4.841e-10
+ NOR2     11 4.044e-07       NaN 0.8948       NaN      True 3.425e-10  2.14e-11
+ AND2     00 2.409e-06   0.09074    NaN         1      True 1.586e-09 1.586e-09
+ AND2     01 2.409e-06 4.682e-06    NaN         1      True 4.851e-09 4.785e-09
+ AND2     10 2.409e-06    0.7657    NaN         1      True 2.696e-09 2.695e-09
+ AND2     11         1  2.78e-06    NaN 5.493e-06      True 3.874e-09 3.493e-09
+  OR2     00 2.409e-06       NaN      1         1      True 5.371e-09 5.371e-09
+  OR2     01         1       NaN      1  5.64e-06      True 4.354e-09 4.066e-09
+  OR2     10         1       NaN 0.2397 2.289e-06      True 2.564e-09 2.435e-09
+  OR2     11         1       NaN 0.8948 7.611e-07      True 2.293e-09 1.972e-09
+SMOKE TEST PASSED
+
+== full: 18 gate/input cases x 200 corners = 3600 simulations ==
+  [full] INV      400 sims  failed=0  logic_ok=400/400  max power-balance err=7.9e-16  (21s)
+  [full] NAND2    800 sims  failed=0  logic_ok=800/800  max power-balance err=1.1e-15  (73s)
+  [full] NOR2     800 sims  failed=0  logic_ok=800/800  max power-balance err=9.0e-16  (123s)
+  [full] AND2     800 sims  failed=0  logic_ok=800/800  max power-balance err=9.0e-07  (573s)
+  [full] OR2      800 sims  failed=0  logic_ok=800/800  max power-balance err=2.3e-07  (711s)
+  [PASS] 3600 simulations == 3600 expected
+  [PASS] converged: 3600/3600
+  [PASS] truth table correct: 3600/3600
+  [PASS] power balance sources == devices (max rel err 9.0e-07 < 1e-06)
+  [PASS] leakage positive and finite
+  [PASS] unique (gate, inputs, corner)
+ gate inputs    median      mean       min        p5       p95       max
+ AND2     00 2.627e-09 4.113e-09 2.255e-10 4.795e-10 1.223e-08 2.568e-08
+ AND2     01 7.476e-09 1.254e-08 5.699e-10 1.077e-09 4.058e-08 8.408e-08
+ AND2     10 4.569e-09 7.443e-09 3.036e-10 6.388e-10 2.311e-08 4.712e-08
+ AND2     11 6.618e-09 1.042e-08 4.749e-10 9.744e-10 3.152e-08 6.340e-08
+  INV      0 2.564e-09 4.765e-09 1.787e-10 3.927e-10 1.668e-08 3.317e-08
+  INV      1 1.418e-09 2.743e-09 9.561e-11 2.186e-10 9.673e-09 2.148e-08
+NAND2     00 1.050e-09 1.369e-09 1.067e-10 2.051e-10 3.760e-09 6.223e-09
+NAND2     01 5.126e-09 9.788e-09 3.226e-10 7.130e-10 3.443e-08 6.940e-08
+NAND2     10 2.352e-09 4.698e-09 1.642e-10 3.621e-10 1.701e-08 3.249e-08
+NAND2     11 3.046e-09 5.647e-09 2.237e-10 4.794e-10 1.947e-08 4.322e-08
+ NOR2     00 6.452e-09 1.043e-08 4.784e-10 1.116e-09 3.478e-08 6.957e-08
+ NOR2     01 3.572e-09 6.446e-09 3.119e-10 5.679e-10 2.047e-08 4.650e-08
+ NOR2     10 9.973e-10 1.967e-09 6.419e-11 1.438e-10 6.876e-09 1.595e-08
+ NOR2     11 5.151e-10 6.553e-10 6.513e-11 1.301e-10 1.592e-09 2.596e-09
+  OR2     00 8.622e-09 1.318e-08 7.118e-10 1.372e-09 4.024e-08 8.424e-08
+  OR2     01 7.574e-09 1.121e-08 5.497e-10 1.236e-09 3.328e-08 6.593e-08
+  OR2     10 4.280e-09 6.733e-09 3.020e-10 5.748e-10 2.100e-08 4.336e-08
+  OR2     11 3.382e-09 5.421e-09 2.602e-10 6.034e-10 1.753e-08 3.570e-08
+B3_EXIT=0

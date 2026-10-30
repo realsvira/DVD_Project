@@ -47,36 +47,84 @@ def input_columns(cfg: Config) -> list[str]:
 
 
 # ===================================================================== sampling
-def _draw_block(cfg: Config, case: str, block: int) -> pd.DataFrame:
+PROFILES = ("uniform", "targeted")
+TARGET_DV_MIN = 1e-9      # V: smallest |Vds| / rail offset drawn by the targeted profile
+TARGET_DV_MAX = 0.05      # x VDD: largest
+
+
+def _near_rail(rng, vdd, size):
+    """A terminal voltage near 0 or VDD: offset log-uniform in [1 nV, 0.05 VDD],
+    20 % of them exactly on the rail. Returns (values, rail_is_high)."""
+    high = rng.uniform(size=size) < 0.5
+    off = 10 ** rng.uniform(np.log10(TARGET_DV_MIN), np.log10(TARGET_DV_MAX * vdd), size)
+    off = np.where(rng.uniform(size=size) < 0.2, 0.0, off)
+    return np.where(high, vdd - off, off), high
+
+
+def _targeted_vd_vs(rng, vdd, size):
+    """Gate-relevant terminal voltages (supplementary data, not the spec distribution):
+    40 % near-equal (|Vds| log-uniform 1 nV .. 0.05 VDD, both signs) at a uniform level,
+    40 % both terminals near a rail, 20 % one terminal near a rail and the other uniform.
+    All random numbers are drawn for every row, so the stream is fixed."""
+    mode = rng.choice(3, size=size, p=[0.4, 0.4, 0.2])
+    # near-equal
+    base = rng.uniform(size=size) * vdd
+    dv = 10 ** rng.uniform(np.log10(TARGET_DV_MIN), np.log10(TARGET_DV_MAX * vdd), size)
+    dv *= np.where(rng.uniform(size=size) < 0.5, -1.0, 1.0)
+    ne_d, ne_s = np.clip(base + dv / 2, 0, vdd), np.clip(base - dv / 2, 0, vdd)
+    # rails
+    r_d, _ = _near_rail(rng, vdd, size)
+    r_s, _ = _near_rail(rng, vdd, size)
+    # mixed
+    u = rng.uniform(size=size) * vdd
+    d_is_rail = rng.uniform(size=size) < 0.5
+    m_d, m_s = np.where(d_is_rail, r_d, u), np.where(d_is_rail, u, r_s)
+    vd = np.select([mode == 0, mode == 1], [ne_d, r_d], m_d)
+    vs = np.select([mode == 0, mode == 1], [ne_s, r_s], m_s)
+    return vd, vs
+
+
+def _draw_block(cfg: Config, case: str, block: int, profile: str = "uniform",
+                salt: int = 0) -> pd.DataFrame:
+    """salt = 0 reproduces the original spec datasets exactly; any other salt gives an
+    independent stream (used for supplementary training data and fresh test sets)."""
+    if profile not in PROFILES:
+        raise ValueError(f"profile must be one of {PROFILES}")
     c = cfg.cases[case]
     nom = nominal_process(cfg, c.device)
     size = rng_block(cfg)
-    rng = np.random.default_rng([case_seed(cfg, case), block])
+    seed = [case_seed(cfg, case), block] if salt == 0 else [case_seed(cfg, case), block, salt]
+    rng = np.random.default_rng(seed)
     vdd = rng.uniform(*cfg.vdd_range, size)                       # VDD first
-    df = pd.DataFrame({
-        "vdd": vdd,
-        "temp": rng.uniform(*cfg.temp_range, size),
-        "w": rng.uniform(*cfg.w_range, size),
-        "vd": rng.uniform(0.0, 1.0, size) * vdd,                  # independent U(0, VDD)
-        "vs": rng.uniform(0.0, 1.0, size) * vdd,
-        "vg": c.vg_frac * vdd,                                    # fixed by the case
-        "vb": c.vb_frac * vdd,
-    })
+    temp = rng.uniform(*cfg.temp_range, size)
+    w = rng.uniform(*cfg.w_range, size)
+    if profile == "uniform":
+        vd = rng.uniform(0.0, 1.0, size) * vdd                    # independent U(0, VDD)
+        vs = rng.uniform(0.0, 1.0, size) * vdd
+    else:
+        vd, vs = _targeted_vd_vs(rng, vdd, size)
+    df = pd.DataFrame({"vdd": vdd, "temp": temp, "w": w, "vd": vd, "vs": vs,
+                       "vg": c.vg_frac * vdd,                     # fixed by the case
+                       "vb": c.vb_frac * vdd})
     tol = cfg.process_tolerance
     for p in cfg.process_params:                                  # this device's nominals
         df[p] = nom[p] * rng.uniform(1 - tol, 1 + tol, size)
     df = df.map(lambda x: float(f"{x:.12g}"))                    # = values written to netlist
+    if profile == "targeted":                                     # rail values: keep 0 <= V <= VDD
+        df["vd"] = np.minimum(np.maximum(df.vd, 0.0), df.vdd)     # after rounding (uniform path is
+        df["vs"] = np.minimum(np.maximum(df.vs, 0.0), df.vdd)     # left untouched = original data)
     df.insert(0, "sample_id", np.arange(block * size, (block + 1) * size))
     return df
 
 
-def generate_samples(cfg: Config, case: str, ids) -> pd.DataFrame:
+def generate_samples(cfg: Config, case: str, ids, profile: str = "uniform",
+                     salt: int = 0) -> pd.DataFrame:
     """Inputs for the given sample ids (any order/subset), sorted by id."""
     ids = np.unique(np.asarray(ids, dtype=np.int64))
     if len(ids) == 0:
         return pd.DataFrame(columns=["sample_id", *input_columns(cfg)])
     size = rng_block(cfg)
-    parts = [_draw_block(cfg, case, b) for b in np.unique(ids // size)]
+    parts = [_draw_block(cfg, case, b, profile, salt) for b in np.unique(ids // size)]
     df = pd.concat(parts, ignore_index=True)
     return df[df.sample_id.isin(ids)].reset_index(drop=True)
 
@@ -124,7 +172,7 @@ class CaseRun:
 
 
 def simulate_ids(cfg: Config, case: str, ids, out_dir: Path, sim: NgspiceSimulator,
-                 batch_size: int, bar=None) -> CaseRun:
+                 batch_size: int, bar=None, profile: str = "uniform", salt: int = 0) -> CaseRun:
     """Simulate the given ids in batches; each batch is saved as one shard."""
     import time
     run = CaseRun(case)
@@ -132,7 +180,7 @@ def simulate_ids(cfg: Config, case: str, ids, out_dir: Path, sim: NgspiceSimulat
     t0 = time.perf_counter()
     for i in range(0, len(ids), batch_size):
         chunk_ids = ids[i:i + batch_size]
-        inputs = generate_samples(cfg, case, chunk_ids)
+        inputs = generate_samples(cfg, case, chunk_ids, profile, salt)
         state = {"left": len(inputs)}
 
         def prog(done, total, elapsed, _s=state):
@@ -214,8 +262,14 @@ def assemble(cfg: Config, shards: pd.DataFrame, n_valid: int):
 
 # ===================================================================== validation
 def validate(cfg: Config, case: str, df: pd.DataFrame, n_expected: int,
-             sample_ids: pd.Series | None = None) -> list[tuple[bool, str]]:
-    """Checks on a final dataset (columns exactly cfg.columns)."""
+             sample_ids: pd.Series | None = None,
+             allow_exact_zero: bool = False) -> list[tuple[bool, str]]:
+    """Checks on a final dataset (columns exactly cfg.columns).
+
+    allow_exact_zero: the targeted profile places terminals exactly on the rails, where a
+    current can be exactly 0 in SPICE (e.g. Ig when Vgd = 0 and Vgs ~ 0). Then exact zeros
+    are reported, not failed. (Failed simulations never appear as zeros either way: they
+    are excluded from the final data and logged in failures.csv.)"""
     c = cfg.cases[case]
     nom = nominal_process(cfg, c.device)
     eps = 1e-9
@@ -246,7 +300,11 @@ def validate(cfg: Config, case: str, df: pd.DataFrame, n_expected: int,
     checks.append((not df.duplicated(subset=inp).any(), "input rows unique"))
     if sample_ids is not None:
         checks.append((sample_ids.is_unique, "sample ids unique"))
-    checks.append((bool((df[CURRENT_COLS] != 0).all().all()), "no exactly-zero currents"))
+    n_zero = int((df[CURRENT_COLS] == 0).any(axis=1).sum())
+    checks.append((n_zero == 0 or allow_exact_zero,
+                   "no exactly-zero currents" if n_zero == 0 else
+                   f"{n_zero} rows with an exactly-zero SPICE current"
+                   + (" (allowed: targeted rail biases)" if allow_exact_zero else "")))
     checks.append((bool(kcl_ok(df).all()),
                    f"Kirchhoff |id+ig+is+ib| within tolerance for all rows "
                    f"(max {kcl_residual(df).abs().max():.2e} A)" if len(df) else "Kirchhoff"))

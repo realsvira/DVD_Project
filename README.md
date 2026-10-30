@@ -290,6 +290,97 @@ This takes about 2 minutes. It reads `data/transistor/` and writes everything to
 - **Conditioning:** the OFF-current plots must condition on the source potential, not just |Vds|. Each 0.1·VDD that the source sits off its rail cuts the current by about 1 decade.
 - **toxe warning:** every sample with a non-nominal toxe triggers the BSIM4 warning "toxe != toxp + dtox; dtox ignored", because the spec varies toxe only. It is documented as a modelling assumption.
 
+## Part A2: ML transistor models
+
+### Commands
+```powershell
+# train + tune + select + save (about 1.5 h on 12 cores; resumable, results cached in results\a2\tuning\)
+.\.venv\Scripts\python.exe scripts\a2_train_models.py
+# quick code check with a tiny grid (about 2 min; writes results\a2_quick, saves no models)
+.\.venv\Scripts\python.exe scripts\a2_train_models.py --quick
+# ONE-TIME test-set evaluation (refuses to run twice)
+.\.venv\Scripts\python.exe scripts\a2_evaluate_test.py
+# reload the saved models and predict one transistor (add --spice to compare with ngspice)
+.\.venv\Scripts\python.exe scripts\a2_predict.py --device nmos --vd 1.0 --vg 0 --vs 0 --vb 0 --vdd 1.0 --temp 27 --w 90e-9 --spice
+```
+From Python:
+```python
+import sys; sys.path.insert(0, "src")
+from leakage.inference import LeakagePredictor
+lp = LeakagePredictor()                                   # loads trained_models\<case>.joblib
+lp.predict("pmos", vd=0.0, vg=1.0, vs=1.0, vb=1.0, vdd=1.0, temp=85, w=180e-9, vth0=-0.47)
+# -> DataFrame: case, id, ig, is, ib (A, positive into the device), extrapolated
+```
+The ON/OFF state is inferred from Vg (NMOS is ON when Vg = VDD; PMOS is ON when Vg = 0), or you can pass `state=`.
+- Vg and Vb must follow the case rule.
+- Process parameters default to nominal.
+- Inputs outside the training ranges are flagged (`strict=True` raises an error instead).
+
+### Results (test set, evaluated once; full report in `reports/a2_ml_report.md`)
+An MLP was selected in all four cases. Mean over Id/Ig/Is/Ib:
+
+| Case | Median rel. err | p95 rel. err | R²_t |
+|---|---|---|---|
+| NMOS ON | 2.43 % | 13.2 % | 0.9989 |
+| NMOS OFF | 1.54 % | 9.6 % | 0.9990 |
+| PMOS ON | 2.75 % | 18.6 % | 0.9975 |
+| PMOS OFF | 1.14 % | 7.3 % | 0.9976 |
+
+- **Ig and Ib:** median error 0.6–1.3 %, with signs 100 % correct.
+- **Id and Is** carry most of the error, worst for ON devices at |Vds| < 0.05 V.
+- **99 % target:** not reached as a mean over terminals (best: 98.9 % for PMOS OFF). It is reached by Ig and Ib in the OFF cases.
+
+Plots: `results/a2/fig_pred_vs_spice_<case>.png`. Validation table: `results/a2/validation_comparison.csv`.
+
+### Method
+- **Split:** 70/15/15 per case with a fixed seed, saved in `data/transistor/splits.csv`.
+  - Test rows are dropped before any fitting.
+  - Scalers and target statistics use the training split only.
+  - Tuning and model selection use validation only.
+  - The test set is evaluated once by a separate script that keeps a record.
+- **Features** (`src/leakage/ml.py`): VDD, T in K, log10 W, Vd, Vs, Vds, |Vds|, Vgs, Vgd, Vbs, Vbd, the source offset from its rail, and each process parameter relative to its nominal value.
+- **Targets:** all four terminal currents together (multi-output), transformed with `asinh(I/1e-15 A)`. This works like a signed log, keeps the sign and passes smoothly through zero. It was chosen by a validation study (`results/a2/transform_study.csv`):
+  - linear targets did far worse;
+  - asinh with I₀ = 1e-18, 1e-12 or 1e-9 A did worse;
+  - sign classifier + log10|I| did slightly better, but it needs a second model per terminal.
+- **Algorithms:** polynomial ridge, random forest, LightGBM and an MLP (L-BFGS, tanh), each grid-searched on validation.
+- **Selection:** the lowest mean over Id/Ig/Is/Ib of the validation median relative error.
+- **Reproducibility:** every fit uses fixed seeds and exactly 2 BLAS threads, because the thread count changes MLP results. Each saved model stores its metadata (split and dataset hashes, hyperparameters, validation metrics, versions).
+- **Error definitions:**
+  - Relative error is |I_pred − I_spice| / max(|I_spice|, 1 fA).
+  - Absolute error is in A.
+  - Scale error is the error divided by the sample's largest terminal current.
+  - Sign accuracy counts only samples with |I| ≥ 10 fA.
+  - R²_t is R² of asinh(I/1 fA).
+
+## Part B step 3: gate-level SPICE references
+
+```powershell
+.\.venv\Scripts\python.exe scripts\b3_gate_spice.py --smoke   # nominal corner + corner 0, 36 sims, ~10 s
+.\.venv\Scripts\python.exe scripts\b3_gate_spice.py           # smoke first, then 18 x 200 = 3,600 sims (~5-12 min)
+& "D:\VLSI\NGSPICE\ngspice-44.2_64\Spice64\bin\ngspice_con.exe" -b netlists\gates\NAND2.cir
+```
+- **Gates** (`src/leakage/gates.py`; topologies are stored as data so Part B step 4 and Part C can reuse them):
+  - INV, NAND2, NOR2, and AND2/OR2, which are NAND2/NOR2 followed by an inverter and simulated as one netlist.
+  - Bodies connect NMOS→0 and PMOS→VDD.
+- **Sizing:** the PDF doesn't specify it, so equal-drive sizing is used. The unit inverter has Wn = 90 nm and Wp = 180 nm; series pairs use 2× unit width.
+  - INV: N 90 / P 180 nm.
+  - NAND2: N 180 (series) / P 180 nm.
+  - NOR2: N 90 / P 360 nm (series).
+  - Every width lies within the ML training range of 45–360 nm.
+- **Corners:** 200 corners in `data/gates/corners.csv`. Each corner has its own RNG, `default_rng([4004, corner_id])`, which draws VDD, T, one NMOS draw of the 5 process parameters and one separate PMOS draw. The same `corner_id`s are used for every gate and will be reused in Part C.
+- **Inputs:** exactly 0 or the sampled VDD. Every netlist carries the required `.options` line, and every transistor terminal has a 0 V current probe.
+- **Leakage:** `I_leak = Σ_k V_k·(−i(V_k)) / VDD` over the VDD rail and input sources, i.e. static power divided by VDD. It is always positive and includes gate tunnelling drawn from inputs held at VDD. The VDD-rail current alone is stored as `i_vdd`.
+- **Outputs:**
+  - `data/gates/gate_spice_results.csv`: 3,600 rows with leakage, v(out), x/y/n1 node voltages and checks.
+  - `data/gates/gate_spice_devices.csv`: terminal voltages and SPICE currents of every transistor.
+  - `failures.csv` and `metadata.json` in the same folder.
+  - `results/b3/` (truth table, per-case summary, report).
+- **Checks:**
+  - 3,600/3,600 converged and 3,600/3,600 truth tables correct.
+  - The power from the sources matches Σ V·I over all device terminals to within 1e-6 relative (`reltol`).
+- These results are evaluation references only. No model is trained on them.
+
 ## Workflow status
 
 | Stage | Status |
@@ -298,7 +389,10 @@ This takes about 2 minutes. It reads `data/transistor/` and writes everything to
 | A1. Simulation engine, example netlists, smoke test | done |
 | A1. 4 × 10,000 datasets | done |
 | A1. Data check (Kirchhoff summary, 3 trend plots, quality report) | done |
-| A2. ML model comparison and selection | next |
+| A2. ML model comparison, selection, test evaluation, inference API | done |
+| A2b. Improved v2 models (targeted data, signed-log Vds feature): final = v2 for ON, v1 for OFF; see `reports/a2b_improvement_report.md` | done |
+| B3. Gate SPICE references (18 cases × 200 corners) | done |
+| B4–5. ML gate prediction and comparison | next |
 | A2. ML model comparison and selection | - |
 | B. Gate-level validation (18 cases × 200 corners) | - |
 | C. 3-bit CLA validation | - |

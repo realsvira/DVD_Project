@@ -113,7 +113,7 @@ def run_smoke(cfg, cases, sim) -> bool:
 
 
 # ===================================================================== generation
-def generate_case(cfg, case, n, out, sim, batch, max_extra, progress) -> dict:
+def generate_case(cfg, case, n, out, sim, batch, max_extra, progress, profile="uniform", salt=0) -> dict:
     t0 = time.perf_counter()
     simulated_now = 0
     while True:
@@ -127,7 +127,7 @@ def generate_case(cfg, case, n, out, sim, batch, max_extra, progress) -> dict:
             if len(shards):
                 bar.write(f"  {case}: resuming, {len(shards)} samples already saved, "
                           f"{len(todo)} to simulate")
-            run = simulate_ids(cfg, case, todo, out, sim, batch, bar)
+            run = simulate_ids(cfg, case, todo, out, sim, batch, bar, profile, salt)
         simulated_now += run.simulated_now
     shards = load_shards(cfg, out, case)
     return {"shards": shards, "simulated_now": simulated_now,
@@ -149,6 +149,10 @@ def main() -> int:
     ap.add_argument("--max-extra", type=int, default=None,
                     help="max extra samples drawn to replace failures (default 5%% of n, >= 50)")
     ap.add_argument("--skip-smoke", action="store_true")
+    ap.add_argument("--profile", choices=["uniform", "targeted"], default="uniform",
+                    help="uniform = spec distribution; targeted = supplementary near-rail / small-|Vds| samples")
+    ap.add_argument("--seed-salt", type=int, default=0,
+                    help="0 = the spec datasets; any other value = an independent random stream")
     ap.add_argument("--no-progress", action="store_true")
     a = ap.parse_args()
 
@@ -179,7 +183,7 @@ def main() -> int:
     results = {}
     try:
         for case in a.cases:
-            results[case] = generate_case(cfg, case, n, out, sim, batch, max_extra,
+            results[case] = generate_case(cfg, case, n, out, sim, batch, max_extra, profile=a.profile, salt=a.seed_salt,
                                           progress=not a.no_progress)
     except KeyboardInterrupt:
         print("\nInterrupted. Everything simulated so far is saved; rerun the same command to resume.")
@@ -198,7 +202,8 @@ def main() -> int:
         csv_path, idx_path = out / f"{case}.csv", out / f"{case}_index.csv"
         final.to_csv(csv_path, index=False)
         index.to_csv(idx_path, index=False)
-        checks = validate(cfg, case, final, n, index.sample_id)
+        checks = validate(cfg, case, final, n, index.sample_id,
+                          allow_exact_zero=(a.profile == "targeted"))
         print(f"  {case}:")
         ok = print_checks(checks)
         all_ok &= ok
@@ -242,7 +247,7 @@ def main() -> int:
                   "sha256": model_hash},
         "assignment": {"vdd_nominal": cfg.vdd_nominal, "lmin": cfg.lmin,
                        "test_circuit": cfg.test_circuit},
-        "sampling": {"n_valid_per_case": n, "vdd_range": cfg.vdd_range,
+        "sampling": {"n_valid_per_case": n, "profile": a.profile, "seed_salt": a.seed_salt, "vdd_range": cfg.vdd_range,
                      "temp_range_c": cfg.temp_range, "w_range_m": cfg.w_range,
                      "vd_vs": "independent U(0, vdd)", "process_params": cfg.process_params,
                      "process_tolerance": cfg.process_tolerance, "rng_block": rng_block(cfg),

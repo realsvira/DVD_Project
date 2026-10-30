@@ -28,5 +28,6 @@ data/transistor_small/
 data/tmp/
 data/**/*.tmp
 data/**/*.parquet
-trained_models/**/*
+results/a2_quick/
+results/a2b/model_cache/
 !**/.gitkeep

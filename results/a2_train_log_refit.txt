@@ -1,0 +1,66 @@
+Split sizes:
+split     test  train   val
+case                       
+nmos_off  1500   7000  1500
+nmos_on   1500   7000  1500
+pmos_off  1500   7000  1500
+pmos_on   1500   7000  1500
+[transform linear] 4 cached, 0 to fit with 6 workers
+[transform asinh(I/1e-18)] 4 cached, 0 to fit with 6 workers
+[transform asinh(I/1e-15)] 4 cached, 0 to fit with 6 workers
+[transform asinh(I/1e-12)] 4 cached, 0 to fit with 6 workers
+[transform asinh(I/1e-09)] 4 cached, 0 to fit with 6 workers
+
+Transform study (validation mean-over-terminals median relative error, LightGBM):
+case            nmos_off  nmos_on  pmos_off  pmos_on  mean_over_cases
+transform                                                            
+sign+log10|I|    0.06891  0.08112   0.05519  0.08493          0.07254
+asinh(I/1e-15)   0.07818  0.08681   0.05476  0.08776          0.07688
+asinh(I/1e-18)   0.08979  0.09386   0.05921  0.09303          0.08397
+asinh(I/1e-12)   0.09571   0.1093   0.07432   0.1152          0.09865
+asinh(I/1e-09)    0.2173   0.2798    0.1346   0.2931           0.2312
+linear            0.3326   0.3471     0.151   0.3379           0.2921
+Note: 'sign+log10|I|' scored best overall (by 0.00434) but needs a separate sign classifier; choosing the best single-model transform.
+Chosen target transform: asinh(I/1e-15)
+[tuning] 112 cached, 0 to fit with 6 workers
+
+Refitting 4 selected models in parallel (2 threads each) ...
+refit done in 640s
+nmos_on: refit validation score 0.022545246 vs tuned 0.022545246 -> reproduced exactly
+saved nmos_on.joblib: mlp {'hidden': (128, 128, 128), 'alpha': 1e-07, 'activation': 'tanh', 'solver': 'lbfgs', 'max_iter': 3000}  val score 0.02255
+nmos_off: refit validation score 0.015463236 vs tuned 0.015463236 -> reproduced exactly
+saved nmos_off.joblib: mlp {'hidden': (128, 128, 128), 'alpha': 1e-05, 'activation': 'tanh', 'solver': 'lbfgs', 'max_iter': 3000}  val score 0.01546
+pmos_on: refit validation score 0.025691204 vs tuned 0.025691204 -> reproduced exactly
+saved pmos_on.joblib: mlp {'hidden': (128, 128, 128), 'alpha': 1e-07, 'activation': 'tanh', 'solver': 'lbfgs', 'max_iter': 3000}  val score 0.02569
+pmos_off: refit validation score 0.011497323 vs tuned 0.011497323 -> reproduced exactly
+saved pmos_off.joblib: mlp {'hidden': (128, 128, 128), 'alpha': 1e-07, 'activation': 'tanh', 'solver': 'lbfgs', 'max_iter': 3000}  val score 0.0115
+
+Validation comparison (best config per algorithm):
+    case          algo  mean_r2_t  mean_med_rel  mean_p95_rel  id_med_rel  ig_med_rel  is_med_rel  ib_med_rel  fit_seconds
+nmos_off           mlp     0.9973       0.01546       0.09418     0.02294    0.007262     0.02339    0.008262         1036
+nmos_off      lightgbm     0.9906       0.07152        0.5526      0.1065     0.04777      0.1052     0.02664        188.5
+nmos_off random_forest     0.9685        0.2199         1.224      0.3022       0.217      0.3025     0.05808        32.42
+nmos_off    poly_ridge     0.9416         0.466          3.19      0.8538     0.02205      0.8668      0.1215         1.29
+ nmos_on           mlp     0.9982       0.02255        0.1262     0.03301     0.01138     0.03321     0.01258        991.4
+ nmos_on      lightgbm     0.9971       0.07941        0.4267     0.07863     0.06652     0.08054     0.09193        42.55
+ nmos_on random_forest     0.9876         0.251         1.863      0.2667      0.2168      0.2674       0.253         19.3
+ nmos_on    poly_ridge     0.9606        0.5683         81.27           1     0.09584           1      0.1773         1.57
+pmos_off           mlp     0.9988        0.0115        0.0702     0.01531    0.005433     0.01699    0.008257        566.1
+pmos_off      lightgbm     0.9817       0.05044        0.5498     0.07123      0.0409     0.07735     0.01229        72.47
+pmos_off random_forest     0.9551        0.1807        0.8503       0.229      0.1878      0.2412     0.06486        35.39
+pmos_off    poly_ridge     0.9367        0.3839         2.724      0.6927     0.02354      0.6946      0.1249         1.17
+ pmos_on           mlp     0.9973       0.02569        0.1652     0.04114     0.01041     0.03858     0.01264         1029
+ pmos_on      lightgbm     0.9976       0.07927        0.4407     0.08683      0.0497      0.0838     0.09676        51.35
+ pmos_on random_forest     0.9873        0.2604         1.957      0.2994      0.1868       0.299      0.2565        29.28
+ pmos_on    poly_ridge     0.9614        0.5643          52.9           1     0.06478           1      0.1924          1.2
+
+Selected per case:
+         algo                                                                                                  params     score
+case                                                                                                                           
+nmos_off  mlp  {"hidden": [128, 128, 128], "alpha": 1e-05, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}  0.015463
+nmos_on   mlp  {"hidden": [128, 128, 128], "alpha": 1e-07, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}  0.022545
+pmos_off  mlp  {"hidden": [128, 128, 128], "alpha": 1e-07, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}  0.011497
+pmos_on   mlp  {"hidden": [128, 128, 128], "alpha": 1e-07, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}  0.025691
+
+Total 696s. Outputs in C:\Users\Saumya\DVD_Project\results\a2
+TRAIN_EXIT=0

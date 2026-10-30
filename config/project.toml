@@ -89,6 +89,13 @@ test  = 0.15
 [gates]
 n_corners = 200
 names     = ["INV", "NAND2", "NOR2", "AND2", "OR2"]
+# Sizing (not specified by the PDF): equal-drive ("logical effort") sizing.
+# Unit inverter Wn = 2*Lmin, Wp = 4*Lmin (PMOS mobility ~ 1/2.7 of NMOS in this card).
+# Series stacks of k devices get k x unit width; parallel devices keep unit width.
+# All resulting widths (90 .. 360 nm) lie inside the ML training range (1..8 Lmin).
+wn_unit_lmin = 2
+wp_unit_lmin = 4
+logic_tolerance = 0.05     # x VDD: output must be within this of its ideal rail
 
 [seeds]
 global     = 2026

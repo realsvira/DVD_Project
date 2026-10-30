@@ -1,0 +1,168 @@
+{
+  "models": {
+    "nmos_on": {
+      "final": "v2",
+      "final_sha256": "7f7a14c325bc2e19d3f0f8da17d9f32ea07febea2efe270e58accdebd39c2510"
+    },
+    "nmos_off": {
+      "final": "v1",
+      "final_sha256": "3bf63f03c70a5b178f2eaec67140a12defd2040e926fb2e9e5a420eb7fc408b6"
+    },
+    "pmos_on": {
+      "final": "v2",
+      "final_sha256": "ec74543f32f692233577b960f6a8b11b473f89646720192ab28c0834a1388d5f"
+    },
+    "pmos_off": {
+      "final": "v1",
+      "final_sha256": "25036a35baade4f90b4af15180b3823ded61579407c170beffd9ba10154a7d8c"
+    }
+  },
+  "evaluated": "2026-11-13T12:01:24",
+  "forced": false,
+  "headline": [
+    {
+      "case": "nmos_on",
+      "model": "v1",
+      "final": false,
+      "test_set": "uniform",
+      "med_rel": 0.022765925085481156,
+      "p95_rel": 0.1199821430742744,
+      "r2_t": 0.9975358002475381
+    },
+    {
+      "case": "nmos_on",
+      "model": "v2",
+      "final": true,
+      "test_set": "uniform",
+      "med_rel": 0.03526144989301963,
+      "p95_rel": 0.14640711277228965,
+      "r2_t": 0.9998605017881965
+    },
+    {
+      "case": "nmos_on",
+      "model": "v1",
+      "final": false,
+      "test_set": "targeted",
+      "med_rel": 0.25607646019336194,
+      "p95_rel": 1250.7509061966584,
+      "r2_t": 0.8431659120578446
+    },
+    {
+      "case": "nmos_on",
+      "model": "v2",
+      "final": true,
+      "test_set": "targeted",
+      "med_rel": 0.07238226161465504,
+      "p95_rel": 1.3127642016857959,
+      "r2_t": 0.9866681508234127
+    },
+    {
+      "case": "nmos_off",
+      "model": "v1",
+      "final": true,
+      "test_set": "uniform",
+      "med_rel": 0.014943389144976763,
+      "p95_rel": 0.1002343458513795,
+      "r2_t": 0.9986440311879679
+    },
+    {
+      "case": "nmos_off",
+      "model": "v2",
+      "final": false,
+      "test_set": "uniform",
+      "med_rel": 0.020749267448698375,
+      "p95_rel": 0.10688816141634014,
+      "r2_t": 0.9990722111674843
+    },
+    {
+      "case": "nmos_off",
+      "model": "v1",
+      "final": true,
+      "test_set": "targeted",
+      "med_rel": 0.030704229949457887,
+      "p95_rel": 4.962100094368622,
+      "r2_t": 0.8766477140377797
+    },
+    {
+      "case": "nmos_off",
+      "model": "v2",
+      "final": false,
+      "test_set": "targeted",
+      "med_rel": 0.03056222202769406,
+      "p95_rel": 0.3446549527722882,
+      "r2_t": 0.9954476272183914
+    },
+    {
+      "case": "pmos_on",
+      "model": "v1",
+      "final": false,
+      "test_set": "uniform",
+      "med_rel": 0.025244928700489663,
+      "p95_rel": 0.16289475363522501,
+      "r2_t": 0.9973985582110778
+    },
+    {
+      "case": "pmos_on",
+      "model": "v2",
+      "final": true,
+      "test_set": "uniform",
+      "med_rel": 0.035167222015557234,
+      "p95_rel": 0.14203223847929514,
+      "r2_t": 0.9997974242843297
+    },
+    {
+      "case": "pmos_on",
+      "model": "v1",
+      "final": false,
+      "test_set": "targeted",
+      "med_rel": 0.3542869351075088,
+      "p95_rel": 654.1306383436108,
+      "r2_t": 0.8316358485844976
+    },
+    {
+      "case": "pmos_on",
+      "model": "v2",
+      "final": true,
+      "test_set": "targeted",
+      "med_rel": 0.07072315192357309,
+      "p95_rel": 0.7729818758950298,
+      "r2_t": 0.9960731252998528
+    },
+    {
+      "case": "pmos_off",
+      "model": "v1",
+      "final": true,
+      "test_set": "uniform",
+      "med_rel": 0.011646254664061773,
+      "p95_rel": 0.07245989553350679,
+      "r2_t": 0.9974139901969693
+    },
+    {
+      "case": "pmos_off",
+      "model": "v2",
+      "final": false,
+      "test_set": "uniform",
+      "med_rel": 0.018170411566368724,
+      "p95_rel": 0.10366813473858366,
+      "r2_t": 0.9988204595939041
+    },
+    {
+      "case": "pmos_off",
+      "model": "v1",
+      "final": true,
+      "test_set": "targeted",
+      "med_rel": 0.022093231787693207,
+      "p95_rel": 4.480478482869227,
+      "r2_t": 0.9125335042251258
+    },
+    {
+      "case": "pmos_off",
+      "model": "v2",
+      "final": false,
+      "test_set": "targeted",
+      "med_rel": 0.026360638935978214,
+      "p95_rel": 0.3639674380064876,
+      "r2_t": 0.9956238879765686
+    }
+  ]
+}

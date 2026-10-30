@@ -47,6 +47,26 @@ def test_generated_inputs_pass_range_checks(case):
     assert all(ok for ok, _ in checks), [t for ok, t in checks if not ok]
 
 
+@pytest.mark.parametrize("case", list(CFG.cases))
+def test_targeted_profile(case):
+    t = generate_samples(CFG, case, range(2000), profile="targeted", salt=1)
+    c = CFG.cases[case]
+    assert ((t.vd >= 0) & (t.vd <= t.vdd) & (t.vs >= 0) & (t.vs <= t.vdd)).all()
+    assert np.allclose(t.vg, c.vg_frac * t.vdd) and np.allclose(t.vb, c.vb_frac * t.vdd)
+    vds = (t.vd - t.vs).abs()
+    assert (vds < 1e-6).mean() > 0.1 and (vds < 0.05).mean() > 0.4      # small |Vds| well covered
+    pd.testing.assert_frame_equal(t, generate_samples(CFG, case, range(2000), profile="targeted", salt=1))
+    other = generate_samples(CFG, case, range(2000), profile="targeted", salt=3)
+    assert not np.allclose(t.vdd, other.vdd)                                  # salts are independent
+
+
+def test_salt_zero_uniform_is_original_stream():
+    a = generate_samples(CFG, "nmos_off", range(50))
+    b = generate_samples(CFG, "nmos_off", range(50), profile="uniform", salt=0)
+    pd.testing.assert_frame_equal(a, b)
+    assert not a.equals(generate_samples(CFG, "nmos_off", range(50), profile="uniform", salt=2))
+
+
 # ------------------------------------------------------------------ resume / top-up
 def test_ids_needed_progression():
     empty = fake_shards("nmos_off", [])

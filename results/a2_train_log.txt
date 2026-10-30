@@ -1,0 +1,195 @@
+Split sizes:
+split     test  train   val
+case                       
+nmos_off  1500   7000  1500
+nmos_on   1500   7000  1500
+pmos_off  1500   7000  1500
+pmos_on   1500   7000  1500
+[transform linear] 0 cached, 4 to fit with 6 workers
+  [transform linear] 1/4 nmos_off lightgbm      score=0.3326 fit=17s  (20s elapsed)
+  [transform linear] 2/4 pmos_off lightgbm      score=0.151 fit=17s  (21s elapsed)
+  [transform linear] 3/4 nmos_on  lightgbm      score=0.3471 fit=18s  (21s elapsed)
+  [transform linear] 4/4 pmos_on  lightgbm      score=0.3379 fit=18s  (21s elapsed)
+[transform asinh(I/1e-18)] 0 cached, 4 to fit with 6 workers
+  [transform asinh(I/1e-18)] 1/4 pmos_off lightgbm      score=0.05921 fit=23s  (24s elapsed)
+  [transform asinh(I/1e-18)] 2/4 pmos_on  lightgbm      score=0.09303 fit=24s  (25s elapsed)
+  [transform asinh(I/1e-18)] 3/4 nmos_off lightgbm      score=0.08979 fit=23s  (26s elapsed)
+  [transform asinh(I/1e-18)] 4/4 nmos_on  lightgbm      score=0.09386 fit=23s  (26s elapsed)
+[transform asinh(I/1e-15)] 0 cached, 4 to fit with 6 workers
+  [transform asinh(I/1e-15)] 1/4 nmos_off lightgbm      score=0.07818 fit=17s  (18s elapsed)
+  [transform asinh(I/1e-15)] 2/4 pmos_off lightgbm      score=0.05476 fit=17s  (19s elapsed)
+  [transform asinh(I/1e-15)] 3/4 nmos_on  lightgbm      score=0.08681 fit=17s  (19s elapsed)
+  [transform asinh(I/1e-15)] 4/4 pmos_on  lightgbm      score=0.08776 fit=18s  (19s elapsed)
+[transform asinh(I/1e-12)] 0 cached, 4 to fit with 6 workers
+  [transform asinh(I/1e-12)] 1/4 nmos_off lightgbm      score=0.09571 fit=16s  (17s elapsed)
+  [transform asinh(I/1e-12)] 2/4 pmos_off lightgbm      score=0.07432 fit=16s  (17s elapsed)
+  [transform asinh(I/1e-12)] 3/4 nmos_on  lightgbm      score=0.1093 fit=16s  (17s elapsed)
+  [transform asinh(I/1e-12)] 4/4 pmos_on  lightgbm      score=0.1152 fit=16s  (17s elapsed)
+[transform asinh(I/1e-09)] 0 cached, 4 to fit with 6 workers
+  [transform asinh(I/1e-09)] 1/4 nmos_off lightgbm      score=0.2173 fit=13s  (14s elapsed)
+  [transform asinh(I/1e-09)] 2/4 pmos_off lightgbm      score=0.1346 fit=13s  (15s elapsed)
+  [transform asinh(I/1e-09)] 3/4 pmos_on  lightgbm      score=0.2931 fit=14s  (15s elapsed)
+  [transform asinh(I/1e-09)] 4/4 nmos_on  lightgbm      score=0.2798 fit=14s  (15s elapsed)
+
+Transform study (validation mean-over-terminals median relative error, LightGBM):
+case            nmos_off  nmos_on  pmos_off  pmos_on  mean_over_cases
+transform                                                            
+sign+log10|I|    0.06891  0.08112   0.05519  0.08493          0.07254
+asinh(I/1e-15)   0.07818  0.08681   0.05476  0.08776          0.07688
+asinh(I/1e-18)   0.08979  0.09386   0.05921  0.09303          0.08397
+asinh(I/1e-12)   0.09571   0.1093   0.07432   0.1152          0.09865
+asinh(I/1e-09)    0.2173   0.2798    0.1346   0.2931           0.2312
+linear            0.3326   0.3471     0.151   0.3379           0.2921
+Note: 'sign+log10|I|' scored best overall (by 0.00434) but needs a separate sign classifier; choosing the best single-model transform.
+Chosen target transform: asinh(I/1e-15)
+[tuning] 0 cached, 112 to fit with 6 workers
+  [tuning] 1/112 nmos_on  poly_ridge    score=0.6063 fit=0s  (0s elapsed)
+  [tuning] 2/112 nmos_on  poly_ridge    score=0.6063 fit=0s  (0s elapsed)
+  [tuning] 3/112 nmos_on  poly_ridge    score=0.6063 fit=0s  (1s elapsed)
+  [tuning] 4/112 nmos_on  poly_ridge    score=0.5683 fit=2s  (2s elapsed)
+  [tuning] 5/112 nmos_on  poly_ridge    score=0.5683 fit=2s  (2s elapsed)
+  [tuning] 6/112 nmos_on  poly_ridge    score=0.5683 fit=2s  (2s elapsed)
+  [tuning] 7/112 nmos_on  random_forest score=0.3481 fit=8s  (8s elapsed)
+  [tuning] 8/112 nmos_on  random_forest score=0.3234 fit=9s  (10s elapsed)
+  [tuning] 9/112 nmos_on  random_forest score=0.2732 fit=12s  (14s elapsed)
+  [tuning] 10/112 nmos_on  random_forest score=0.2568 fit=15s  (16s elapsed)
+  [tuning] 11/112 nmos_on  random_forest score=0.2754 fit=17s  (19s elapsed)
+  [tuning] 12/112 nmos_on  random_forest score=0.251 fit=19s  (21s elapsed)
+  [tuning] 13/112 nmos_on  lightgbm      score=0.09493 fit=23s  (32s elapsed)
+  [tuning] 14/112 nmos_on  lightgbm      score=0.08956 fit=17s  (32s elapsed)
+  [tuning] 15/112 nmos_on  lightgbm      score=0.07941 fit=43s  (63s elapsed)
+  [tuning] 16/112 nmos_on  lightgbm      score=0.1013 fit=58s  (76s elapsed)
+  [tuning] 17/112 nmos_on  lightgbm      score=0.08576 fit=64s  (76s elapsed)
+  [tuning] 18/112 nmos_on  lightgbm      score=0.08574 fit=42s  (77s elapsed)
+  [tuning] 19/112 nmos_on  lightgbm      score=0.08529 fit=136s  (165s elapsed)
+  [tuning] 20/112 nmos_on  lightgbm      score=0.1013 fit=131s  (171s elapsed)
+  [tuning] 21/112 nmos_on  mlp           score=0.02371 fit=279s  (342s elapsed)
+  [tuning] 22/112 nmos_on  mlp           score=0.02537 fit=276s  (352s elapsed)
+  [tuning] 23/112 nmos_on  mlp           score=0.02312 fit=423s  (587s elapsed)
+  [tuning] 24/112 nmos_off poly_ridge    score=0.5716 fit=0s  (588s elapsed)
+  [tuning] 25/112 nmos_off poly_ridge    score=0.5716 fit=0s  (588s elapsed)
+  [tuning] 26/112 nmos_off poly_ridge    score=0.5716 fit=0s  (588s elapsed)
+  [tuning] 27/112 nmos_off poly_ridge    score=0.466 fit=1s  (589s elapsed)
+  [tuning] 28/112 nmos_on  mlp           score=0.023 fit=419s  (590s elapsed)
+  [tuning] 29/112 nmos_off poly_ridge    score=0.466 fit=1s  (591s elapsed)
+  [tuning] 30/112 nmos_off poly_ridge    score=0.466 fit=1s  (591s elapsed)
+  [tuning] 31/112 nmos_off random_forest score=0.2756 fit=9s  (600s elapsed)
+  [tuning] 32/112 nmos_off random_forest score=0.2628 fit=11s  (602s elapsed)
+  [tuning] 33/112 nmos_off random_forest score=0.2213 fit=21s  (622s elapsed)
+  [tuning] 34/112 nmos_off random_forest score=0.2319 fit=19s  (622s elapsed)
+  [tuning] 35/112 nmos_off random_forest score=0.2301 fit=26s  (648s elapsed)
+  [tuning] 36/112 nmos_off random_forest score=0.2199 fit=32s  (655s elapsed)
+  [tuning] 37/112 nmos_on  mlp           score=0.03005 fit=600s  (676s elapsed)
+  [tuning] 38/112 nmos_off lightgbm      score=0.08976 fit=29s  (678s elapsed)
+  [tuning] 39/112 nmos_on  mlp           score=0.02919 fit=604s  (681s elapsed)
+  [tuning] 40/112 nmos_off lightgbm      score=0.09022 fit=26s  (703s elapsed)
+  [tuning] 41/112 nmos_off lightgbm      score=0.07449 fit=74s  (760s elapsed)
+  [tuning] 42/112 nmos_off lightgbm      score=0.0721 fit=113s  (770s elapsed)
+  [tuning] 43/112 nmos_off lightgbm      score=0.08703 fit=105s  (785s elapsed)
+  [tuning] 44/112 nmos_off lightgbm      score=0.08762 fit=61s  (824s elapsed)
+  [tuning] 45/112 nmos_off lightgbm      score=0.07152 fit=188s  (897s elapsed)
+  [tuning] 46/112 nmos_off lightgbm      score=0.08681 fit=148s  (924s elapsed)
+  [tuning] 47/112 nmos_off mlp           score=0.02051 fit=296s  (1081s elapsed)
+  [tuning] 48/112 nmos_off mlp           score=0.02088 fit=297s  (1122s elapsed)
+  [tuning] 49/112 nmos_on  mlp           score=0.02255 fit=991s  (1334s elapsed)
+  [tuning] 50/112 nmos_on  mlp           score=0.02365 fit=1014s  (1366s elapsed)
+  [tuning] 51/112 nmos_off mlp           score=0.01636 fit=466s  (1547s elapsed)
+  [tuning] 52/112 pmos_on  poly_ridge    score=0.6003 fit=0s  (1548s elapsed)
+  [tuning] 53/112 pmos_on  poly_ridge    score=0.6003 fit=0s  (1548s elapsed)
+  [tuning] 54/112 pmos_on  poly_ridge    score=0.6003 fit=0s  (1548s elapsed)
+  [tuning] 55/112 pmos_on  poly_ridge    score=0.5643 fit=1s  (1549s elapsed)
+  [tuning] 56/112 pmos_on  poly_ridge    score=0.5643 fit=1s  (1550s elapsed)
+  [tuning] 57/112 pmos_on  poly_ridge    score=0.5643 fit=1s  (1552s elapsed)
+  [tuning] 58/112 nmos_off mlp           score=0.02469 fit=662s  (1559s elapsed)
+  [tuning] 59/112 pmos_on  random_forest score=0.314 fit=10s  (1562s elapsed)
+  [tuning] 60/112 pmos_on  random_forest score=0.3368 fit=8s  (1568s elapsed)
+  [tuning] 61/112 pmos_on  random_forest score=0.2623 fit=20s  (1582s elapsed)
+  [tuning] 62/112 pmos_on  random_forest score=0.2782 fit=17s  (1585s elapsed)
+  [tuning] 63/112 nmos_off mlp           score=0.02422 fit=669s  (1593s elapsed)
+  [tuning] 64/112 nmos_off mlp           score=0.01616 fit=473s  (1595s elapsed)
+  [tuning] 65/112 pmos_on  random_forest score=0.2838 fit=25s  (1610s elapsed)
+  [tuning] 66/112 pmos_on  random_forest score=0.2604 fit=29s  (1612s elapsed)
+  [tuning] 67/112 pmos_on  lightgbm      score=0.09849 fit=31s  (1625s elapsed)
+  [tuning] 68/112 pmos_on  lightgbm      score=0.09281 fit=20s  (1631s elapsed)
+  [tuning] 69/112 pmos_on  lightgbm      score=0.08643 fit=81s  (1678s elapsed)
+  [tuning] 70/112 pmos_on  lightgbm      score=0.07927 fit=51s  (1680s elapsed)
+  [tuning] 71/112 pmos_on  lightgbm      score=0.1013 fit=72s  (1685s elapsed)
+  [tuning] 72/112 pmos_on  lightgbm      score=0.08696 fit=50s  (1731s elapsed)
+  [tuning] 73/112 pmos_on  lightgbm      score=0.08601 fit=163s  (1802s elapsed)
+  [tuning] 74/112 pmos_on  lightgbm      score=0.1016 fit=151s  (1839s elapsed)
+  [tuning] 75/112 pmos_on  mlp           score=0.03101 fit=291s  (1976s elapsed)
+  [tuning] 76/112 pmos_on  mlp           score=0.03189 fit=261s  (1991s elapsed)
+  [tuning] 77/112 nmos_off mlp           score=0.01575 fit=1030s  (2363s elapsed)
+  [tuning] 78/112 nmos_off mlp           score=0.01546 fit=1036s  (2402s elapsed)
+  [tuning] 79/112 pmos_on  mlp           score=0.02781 fit=479s  (2456s elapsed)
+  [tuning] 80/112 pmos_off poly_ridge    score=0.5759 fit=0s  (2456s elapsed)
+  [tuning] 81/112 pmos_off poly_ridge    score=0.5759 fit=0s  (2456s elapsed)
+  [tuning] 82/112 pmos_off poly_ridge    score=0.5759 fit=0s  (2456s elapsed)
+  [tuning] 83/112 pmos_off poly_ridge    score=0.3839 fit=2s  (2458s elapsed)
+  [tuning] 84/112 pmos_off poly_ridge    score=0.3839 fit=1s  (2459s elapsed)
+  [tuning] 85/112 pmos_off poly_ridge    score=0.3839 fit=1s  (2461s elapsed)
+  [tuning] 86/112 pmos_off random_forest score=0.2218 fit=11s  (2472s elapsed)
+  [tuning] 87/112 pmos_on  mlp           score=0.02796 fit=487s  (2479s elapsed)
+  [tuning] 88/112 pmos_off random_forest score=0.2304 fit=10s  (2482s elapsed)
+  [tuning] 89/112 pmos_on  mlp           score=0.03666 fit=692s  (2495s elapsed)
+  [tuning] 90/112 pmos_off random_forest score=0.1909 fit=21s  (2503s elapsed)
+  [tuning] 91/112 pmos_off random_forest score=0.1843 fit=24s  (2503s elapsed)
+  [tuning] 92/112 pmos_off random_forest score=0.1807 fit=35s  (2531s elapsed)
+  [tuning] 93/112 pmos_off random_forest score=0.19 fit=29s  (2533s elapsed)
+  [tuning] 94/112 pmos_on  mlp           score=0.03775 fit=703s  (2542s elapsed)
+  [tuning] 95/112 pmos_off lightgbm      score=0.06798 fit=48s  (2552s elapsed)
+  [tuning] 96/112 pmos_off lightgbm      score=0.06272 fit=23s  (2557s elapsed)
+  [tuning] 97/112 pmos_off lightgbm      score=0.05044 fit=72s  (2628s elapsed)
+  [tuning] 98/112 pmos_off lightgbm      score=0.05529 fit=98s  (2631s elapsed)
+  [tuning] 99/112 pmos_off lightgbm      score=0.06702 fit=97s  (2640s elapsed)
+  [tuning] 100/112 pmos_off lightgbm      score=0.0565 fit=72s  (2702s elapsed)
+  [tuning] 101/112 pmos_off lightgbm      score=0.05448 fit=251s  (2814s elapsed)
+  [tuning] 102/112 pmos_off lightgbm      score=0.06702 fit=217s  (2854s elapsed)
+  [tuning] 103/112 pmos_off mlp           score=0.0174 fit=305s  (2946s elapsed)
+  [tuning] 104/112 pmos_off mlp           score=0.01602 fit=307s  (3010s elapsed)
+  [tuning] 105/112 pmos_on  mlp           score=0.02569 fit=1029s  (3393s elapsed)
+  [tuning] 106/112 pmos_on  mlp           score=0.02624 fit=1024s  (3426s elapsed)
+  [tuning] 107/112 pmos_off mlp           score=0.01209 fit=482s  (3428s elapsed)
+  [tuning] 108/112 pmos_off mlp           score=0.01229 fit=480s  (3490s elapsed)
+  [tuning] 109/112 pmos_off mlp           score=0.01655 fit=683s  (3497s elapsed)
+  [tuning] 110/112 pmos_off mlp           score=0.01802 fit=664s  (3518s elapsed)
+  [tuning] 111/112 pmos_off mlp           score=0.0115 fit=566s  (3959s elapsed)
+  [tuning] 112/112 pmos_off mlp           score=0.01208 fit=540s  (3967s elapsed)
+WARNING nmos_on: refit score 0.0233744 != tuned 0.0225452
+saved nmos_on.joblib: mlp {'hidden': (128, 128, 128), 'alpha': 1e-07, 'activation': 'tanh', 'solver': 'lbfgs', 'max_iter': 3000}  val score 0.02337
+WARNING nmos_off: refit score 0.0168913 != tuned 0.0154632
+saved nmos_off.joblib: mlp {'hidden': (128, 128, 128), 'alpha': 1e-05, 'activation': 'tanh', 'solver': 'lbfgs', 'max_iter': 3000}  val score 0.01689
+WARNING pmos_on: refit score 0.0252577 != tuned 0.0256912
+saved pmos_on.joblib: mlp {'hidden': (128, 128, 128), 'alpha': 1e-07, 'activation': 'tanh', 'solver': 'lbfgs', 'max_iter': 3000}  val score 0.02526
+WARNING pmos_off: refit score 0.0119798 != tuned 0.0114973
+saved pmos_off.joblib: mlp {'hidden': (128, 128, 128), 'alpha': 1e-07, 'activation': 'tanh', 'solver': 'lbfgs', 'max_iter': 3000}  val score 0.01198
+
+Validation comparison (best config per algorithm):
+    case          algo  mean_r2_t  mean_med_rel  mean_p95_rel  id_med_rel  ig_med_rel  is_med_rel  ib_med_rel  fit_seconds
+nmos_off           mlp     0.9973       0.01546       0.09418     0.02294    0.007262     0.02339    0.008262         1036
+nmos_off      lightgbm     0.9906       0.07152        0.5526      0.1065     0.04777      0.1052     0.02664        188.5
+nmos_off random_forest     0.9685        0.2199         1.224      0.3022       0.217      0.3025     0.05808        32.42
+nmos_off    poly_ridge     0.9416         0.466          3.19      0.8538     0.02205      0.8668      0.1215         1.29
+ nmos_on           mlp     0.9982       0.02255        0.1262     0.03301     0.01138     0.03321     0.01258        991.4
+ nmos_on      lightgbm     0.9971       0.07941        0.4267     0.07863     0.06652     0.08054     0.09193        42.55
+ nmos_on random_forest     0.9876         0.251         1.863      0.2667      0.2168      0.2674       0.253         19.3
+ nmos_on    poly_ridge     0.9606        0.5683         81.27           1     0.09584           1      0.1773         1.57
+pmos_off           mlp     0.9988        0.0115        0.0702     0.01531    0.005433     0.01699    0.008257        566.1
+pmos_off      lightgbm     0.9817       0.05044        0.5498     0.07123      0.0409     0.07735     0.01229        72.47
+pmos_off random_forest     0.9551        0.1807        0.8503       0.229      0.1878      0.2412     0.06486        35.39
+pmos_off    poly_ridge     0.9367        0.3839         2.724      0.6927     0.02354      0.6946      0.1249         1.17
+ pmos_on           mlp     0.9973       0.02569        0.1652     0.04114     0.01041     0.03858     0.01264         1029
+ pmos_on      lightgbm     0.9976       0.07927        0.4407     0.08683      0.0497      0.0838     0.09676        51.35
+ pmos_on random_forest     0.9873        0.2604         1.957      0.2994      0.1868       0.299      0.2565        29.28
+ pmos_on    poly_ridge     0.9614        0.5643          52.9           1     0.06478           1      0.1924          1.2
+
+Selected per case:
+         algo                                                                                                  params     score
+case                                                                                                                           
+nmos_off  mlp  {"hidden": [128, 128, 128], "alpha": 1e-05, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}  0.015463
+nmos_on   mlp  {"hidden": [128, 128, 128], "alpha": 1e-07, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}  0.022545
+pmos_off  mlp  {"hidden": [128, 128, 128], "alpha": 1e-07, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}  0.011497
+pmos_on   mlp  {"hidden": [128, 128, 128], "alpha": 1e-07, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}  0.025691
+
+Total 5544s. Outputs in C:\Users\Saumya\DVD_Project\results\a2
+TRAIN_EXIT=0
