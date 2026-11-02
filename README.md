@@ -381,6 +381,74 @@ Plots: `results/a2/fig_pred_vs_spice_<case>.png`. Validation table: `results/a2/
   - The power from the sources matches Σ V·I over all device terminals to within 1e-6 relative (`reltol`).
 - These results are evaluation references only. No model is trained on them.
 
+## Part B steps 4–5: hierarchical ML gate leakage
+
+```powershell
+.\.venv\Scripts\python.exe scripts\b4_gate_ml.py      # ~5 s; no SPICE is run
+```
+Reuse it, for example in Part C:
+```python
+from leakage.gate_ml import GateLeakageModel
+gm = GateLeakageModel()                   # final transistor models + Part B node voltages
+gm.leakage("NAND2", "01", [0, 1, 2])      # predicted I_leak (A) at corners 0..2
+```
+**Method** (`src/leakage/gate_ml.py`):
+- **No gate-level model is trained.** Each transistor's Vd/Vg/Vs/Vb comes from its circuit connections: inputs exactly 0/VDD, bodies on the rails.
+- **Internal and output node voltages (out, x, y, n1) are the SPICE-recorded values from step 3**, as the PDF allows. The predictions are therefore *not* independent of SPICE node voltages.
+- **ON/OFF model choice:** by gate bias. Gates driven by n1 (the AND2/OR2 inverter) are snapped to the nearest rail; the largest snap is 0.3 mV, and it is recorded.
+- **Leakage:** `I_leak = Σ[(Vd−Vs)Id + (Vg−Vs)Ig + (Vb−Vs)Ib] / VDD`, which equals the SPICE definition by Tellegen's theorem.
+  - KCL is enforced per device, and each terminal is counted once.
+  - Verified by feeding SPICE's own transistor currents through the same code: all 3,600 cases reproduce the SPICE leakage.
+- **No hidden SPICE:** inference runs with subprocess execution blocked, with 0 calls attempted (3,600 cases in 0.2 s).
+
+**Results** (`results/b4/`, `reports/b4_gate_ml_report.md`), over 3,600 predictions:
+
+These results use the final models, which are v2 in all four cases:
+
+| Metric | Value |
+|---|---|
+| Median error | 3.4 % |
+| 95th-percentile error | 12.8 % |
+| Bias | −0.6 % |
+| Mean accuracy | 95.4 % (99 % target not met) |
+
+- **Best:** NAND2 00 (2.4 %) and AND2 00 (2.8 %).
+- **Worst:** NOR2 10 (5.8 %) and NOR2 01 (4.0 %).
+- **Error source:** OFF transistors at rail biases still dominate the gate error.
+- **Earlier run, kept for disclosure:** with v1 OFF models the results were median 4.4 %, p95 21.6 %, mean accuracy 93.1 %. They are archived in `results/b4_archive_off_v1/`, and `reports/a2b_improvement_report.md` explains the switch.
+- Full 18-case table: `results/b4/gate_accuracy_18cases.csv`. Parity plot: `results/b4/fig_gate_parity.png`.
+
+## Part C: 3-bit carry-lookahead adder (assigned test circuit)
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q tests\test_circuit.py      # exhaustive Boolean tests (Cin = 0 and 1)
+.\.venv\Scripts\python.exe scripts\c1_cla_spice.py --smoke         # 128 full-circuit sims (~10 s)
+.\.venv\Scripts\python.exe scripts\c1_cla_spice.py                 # smoke + 64 x 200 = 12,800 sims (~16 min)
+.\.venv\Scripts\python.exe scripts\c2_cla_ml.py                    # hierarchical ML + evaluation (~30 s)
+```
+**Circuit** (`src/leakage/circuit.py`, gate list in `data/circuit/cla3_gate_list.csv`, netlist in `netlists/circuit/CLA3.cir`):
+- **Logic:** Gi = Ai·Bi, Pi = Ai⊕Bi, C1 = G0 + P0·C0, C2 = G1 + P1·G0 + P1·P0·C0, C3 = G2 + P2·G1 + P2·P1·G0 + P2·P1·P0·C0, Si = Pi⊕Ci.
+- **Lookahead:** no carry is computed from another carry (tested).
+- **XOR:** built as AND2(OR2, NAND2), with NAND2(Ai, Bi) shared with Gi = INV(·).
+- **Size:** 36 gates (15 AND2, 12 OR2, 6 NAND2, 3 INV) and 192 transistors. Widths, bodies, model cards and process draws are the same as Part B.
+- **Carry-in:** tied to logic 0, which gives 64 operand vectors. The Boolean model is verified for all 128 combinations (Cin = 0 and 1).
+
+**SPICE reference** (`data/circuit/cla3_spice_results.csv`): the complete 192-transistor netlist at the 200 Part B corners.
+- All 12,800 runs converged, and the outputs equal A+B in every one.
+- Every internal net is within 0.03 % of VDD of its logic level.
+- Leakage uses the same definition as Part B.
+
+**Hierarchical ML** (`data/circuit/cla3_ml_predictions.csv`):
+- Boolean simulation gives each gate's inputs, and the Part B gate model gives each gate's leakage. The circuit leakage is the sum over the 36 gates.
+- Gate-internal voltages are looked up from the Part B *isolated-gate* SPICE runs. Nothing from the full-circuit SPICE run is used.
+
+| 12,800 cases | Median err | p95 err | Bias | Mean accuracy | R² (log10) |
+|---|---|---|---|---|---|
+| ML vs full-circuit SPICE | 2.65 % | 10.6 % | −0.8 % | 96.3 % | 0.998 |
+| Σ Part B SPICE gates vs full circuit (composition only) | 0.006 % | 0.04 % | −0.006 % | 99.99 % | 1.000 |
+
+Loading turned out negligible here. Nearly all of the error comes from the ML models, and it is *lower* than at gate level because the 36 per-gate errors partly cancel. What remains is a corner-level bias that depends on temperature. Full report: `reports/c_cla3_report.md`; plot: `results/c/fig_cla3_parity.png`.
+
 ## Workflow status
 
 | Stage | Status |
@@ -390,9 +458,11 @@ Plots: `results/a2/fig_pred_vs_spice_<case>.png`. Validation table: `results/a2/
 | A1. 4 × 10,000 datasets | done |
 | A1. Data check (Kirchhoff summary, 3 trend plots, quality report) | done |
 | A2. ML model comparison, selection, test evaluation, inference API | done |
-| A2b. Improved v2 models (targeted data, signed-log Vds feature): final = v2 for ON, v1 for OFF; see `reports/a2b_improvement_report.md` | done |
+| A2b. Improved v2 models (targeted data, signed-log Vds feature): final = v2 for all four cases (OFF switched after an amendment, disclosed); see `reports/a2b_improvement_report.md` | done |
 | B3. Gate SPICE references (18 cases × 200 corners) | done |
-| B4–5. ML gate prediction and comparison | next |
+| B4–5. ML gate prediction and comparison | done |
+| C. 3-bit CLA test circuit (SPICE + hierarchical ML) | done |
+| Final written report | next |
 | A2. ML model comparison and selection | - |
 | B. Gate-level validation (18 cases × 200 corners) | - |
 | C. 3-bit CLA validation | - |

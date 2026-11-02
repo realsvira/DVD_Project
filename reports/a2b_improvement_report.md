@@ -27,9 +27,9 @@ All supplementary simulations succeeded: 22,000 of 22,000.
 | Case | v1 orig-val | v1 targeted-val | best v2 orig-val | best v2 targeted-val | Selected |
 |---|---|---|---|---|---|
 | NMOS ON | 2.25 % | 28.3 % | 3.51 % | 7.0 % | **v2** |
-| NMOS OFF | 1.55 % | 2.89 % | 2.03 % | 2.83 % | v1 |
+| NMOS OFF | 1.55 % | 2.89 % | 2.03 % | 2.83 % | v1 → **v2** (amended, see below) |
 | PMOS ON | 2.57 % | 44.0 % | 3.58 % | 7.6 % | **v2** |
-| PMOS OFF | 1.15 % | 2.11 % | 1.72 % | 2.47 % | v1 |
+| PMOS OFF | 1.15 % | 2.11 % | 1.72 % | 2.47 % | v1 → **v2** (amended, see below) |
 
 At |Vds| < 0.05 V (validation), the Id/Is median error for the ON models drops from about 100 % (v1) to about 23 % (v2).
 
@@ -39,20 +39,34 @@ At |Vds| < 0.05 V (validation), the Id/Is median error for the ON models drops f
 |---|---|---|---|
 | NMOS ON | v1 | 2.28 % / 12.0 % | 25.6 % / 125,075 % |
 | NMOS ON | **v2 (final)** | 3.53 % / 14.6 % | **7.24 % / 131 %** |
-| NMOS OFF | **v1 (final)** | 1.49 % / 10.0 % | 3.07 % / 496 % |
-| NMOS OFF | v2 | 2.07 % / 10.7 % | 3.06 % / 34 % |
+| NMOS OFF | v1 | 1.49 % / 10.0 % | 3.07 % / 496 % |
+| NMOS OFF | **v2 (final)** | 2.07 % / 10.7 % | **3.06 % / 34 %** |
 | PMOS ON | v1 | 2.52 % / 16.3 % | 35.4 % / 65,413 % |
 | PMOS ON | **v2 (final)** | 3.52 % / 14.2 % | **7.07 % / 77 %** |
-| PMOS OFF | **v1 (final)** | 1.16 % / 7.3 % | 2.21 % / 448 % |
-| PMOS OFF | v2 | 1.82 % / 10.4 % | 2.64 % / 36 % |
+| PMOS OFF | v1 | 1.16 % / 7.3 % | 2.21 % / 448 % |
+| PMOS OFF | **v2 (final)** | 1.82 % / 10.4 % | **2.64 % / 36 %** |
 
-R²_t (uniform test) for the final models: NMOS ON 0.9999, NMOS OFF 0.9986, PMOS ON 0.9998, PMOS OFF 0.9974.
+R²_t (uniform test) for the final models (all v2): NMOS ON 0.9999, NMOS OFF 0.9991, PMOS ON 0.9998, PMOS OFF 0.9988.
 
 ## Findings
 - v1 ON models are **unusable at small |Vds|**. Their Id/Is predictions there are off by orders of magnitude (p95 above 10⁴ %). v2 fixes this: about 7 % median and below 130 % p95 on the targeted test. It costs about 1.2 percentage points of median error on the spec distribution.
 - For OFF cases, v1 has the best medians but **long tails at rail biases**: targeted p95 is about 450–500 % for v1 versus 34–36 % for v2. The validation split shows the same thing (p95 3.6 / 5.4 for v1 versus 0.30 / 0.40 for v2). The pre-declared, median-only criterion kept v1. A criterion that also weighted the tails would have chosen v2 for OFF, using validation data alone.
 - **99 % target:** still not reached as a 4-terminal mean on the spec distribution. The best case is PMOS OFF at 98.8 %.
 - Gate and body currents remain the most accurate terminals (≤ 1–2 % median).
+
+## Selection amendment (OFF models switched to v2)
+
+The pre-declared median-only criterion kept v1 for the OFF cases. On the user's decision, the final OFF models were switched to v2. The record is in `results/a2b/selection_amendment.json`.
+
+- **Justification (validation only):** on the targeted validation split, the p95 error for v1 vs v2 was 3.61 vs 0.30 (NMOS OFF) and 5.37 vs 0.40 (PMOS OFF). The cost is about +0.5 percentage points of median error on the spec-distribution validation split.
+- **Disclosure:** the switch was decided **after** the fresh test sets and the Part B step 4–5 gate results (with v1 OFF) had been seen. The recommendation itself was based on the validation tails. The gate results with v1 OFF are archived in `results/b4_archive_off_v1/`, so both are reported:
+
+| Gate-level (3,600 cases) | Median err | p95 err | Mean accuracy |
+|---|---|---|---|
+| v2 ON + v1 OFF | 4.44 % | 21.6 % | 93.1 % |
+| v2 ON + v2 OFF (final) | 3.38 % | 12.8 % | 95.4 % |
+
+**Final transistor models: v2 for all four cases.**
 
 ## Reproduce
 ```powershell
