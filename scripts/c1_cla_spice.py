@@ -99,11 +99,18 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--workers", type=int, default=CFG.ngspice_workers)
+    ap.add_argument("--corners-file", type=Path, default=CFG.data / "gates" / "corners.csv")
+    ap.add_argument("--out-data", type=Path, default=None, help="default data/circuit")
+    ap.add_argument("--out-results", type=Path, default=None, help="default results/c")
+    ap.add_argument("--no-netlists", action="store_true")
     a = ap.parse_args()
     circ = build_cla3()
     sim = NgspiceSimulator.from_config(CFG, workers=a.workers, chunk=32)
     ver = ngspice_version(sim.exe)
-    corners = pd.read_csv(CFG.data / "gates" / "corners.csv")
+    global OUT, RES
+    OUT = (a.out_data or OUT).resolve()
+    RES = (a.out_results or RES).resolve()
+    corners = pd.read_csv(a.corners_file)
     print(f"CLA3: {len(circ.gates)} gates, {len(device_list(CFG, circ))} transistors; ngspice {ver}; "
           f"corners from data/gates/corners.csv ({len(corners)})")
 
@@ -131,7 +138,7 @@ def main() -> int:
                    "input_b": g.inputs[1] if len(g.inputs) > 1 else "", "output": g.output,
                    "transistors": len(gates[g.kind].devices)} for g in circ.gates]).to_csv(
         OUT / "cla3_gate_list.csv", index=False)
-    nl = CFG.netlists / "circuit"
+    nl = (CFG.results / "scratch_netlists") if a.no_netlists else CFG.netlists / "circuit"
     nl.mkdir(parents=True, exist_ok=True)
     ex = circuit_netlist(CFG, circ, vector_bits(5 + 8 * 3), corners.iloc[0],
                          title="* 3-bit carry-lookahead adder, complete transistor netlist (36 gates, 192 MOSFETs)\n"
@@ -152,7 +159,7 @@ def main() -> int:
     meta = {"created": dt.datetime.now().isoformat(timespec="seconds"), "ngspice": ver,
             "circuit": "3-bit carry-lookahead adder (CLA3)", "gates": len(circ.gates),
             "transistors": len(device_list(CFG, circ)), "cin": "tied to logic 0 (0 V source)",
-            "vectors": "vector_id = A + 8*B, A,B in 0..7", "corners_sha256": sha256(CFG.data / "gates" / "corners.csv"),
+            "vectors": "vector_id = A + 8*B, A,B in 0..7", "corners_sha256": sha256(a.corners_file),
             "model_sha256": sha256(CFG.spice_model_file), "options": CFG.spice_options,
             "simulations": len(s), "failed": int((s.status != "ok").sum()), "wall_seconds": round(wall, 1),
             "simulator_warnings": dict(res.batch_warnings),

@@ -146,6 +146,14 @@ def make_estimator(algo: str, params: dict, seed: int, n_jobs: int = 1):
                             alpha=params["alpha"], solver=params.get("solver", "lbfgs"),
                             max_iter=params.get("max_iter", 3000), tol=1e-7, random_state=seed,
                             max_fun=params.get("max_iter", 3000) * 2)
+    if algo == "mlp_torch":
+        from .torch_mlp import TorchMLPRegressor
+        return TorchMLPRegressor(hidden=params["hidden"], alpha=params["alpha"],
+                                 max_iter=params.get("max_iter", 20000), seed=seed,
+                                 threads=params.get("threads", 4))
+    if algo == "ensemble":
+        # params["members"]: list of fitted CurrentModel objects; built by EnsembleModel below
+        raise ValueError("ensembles are built with EnsembleModel, not make_estimator")
     raise ValueError(f"unknown algorithm {algo}")
 
 
@@ -237,3 +245,32 @@ def selection_score(metrics: pd.DataFrame) -> float:
     relative error (lower is better). Ties broken by the mean p95 relative error."""
     m = metrics[metrics.terminal != "mean"]
     return float(m.med_rel.mean())
+
+
+# ===================================================================== ensembles
+class EnsembleModel:
+    """Average of several CurrentModels of the same case, taken in the target-transform
+    (asinh) space and transformed back. Same interface as CurrentModel (predict, case,
+    device, nominal, algo, params, meta), so LeakagePredictor / gate models use it as-is."""
+
+    def __init__(self, members: list, meta: dict | None = None):
+        if not members:
+            raise ValueError("empty ensemble")
+        cases = {m.case for m in members}
+        if len(cases) != 1:
+            raise ValueError(f"members from different cases: {cases}")
+        self.members = list(members)
+        m0 = members[0]
+        self.case, self.device, self.nominal = m0.case, m0.device, m0.nominal
+        self.transform = TargetTransform("asinh", 1e-15)
+        self.algo = "ensemble"
+        self.params = {"members": [{"algo": m.algo, **{k: (list(v) if isinstance(v, tuple) else v)
+                                                         for k, v in m.params.items()},
+                                    "feature_set": getattr(m, "feature_set", "v1")} for m in members]}
+        self.feature_set = "+".join(sorted({getattr(m, "feature_set", "v1") for m in members}))
+        self.meta = meta or {}
+
+    def predict(self, df: pd.DataFrame) -> pd.DataFrame:
+        ys = [self.transform.forward(m.predict(df)[TARGETS].to_numpy(float)) for m in self.members]
+        current = self.transform.inverse(np.mean(ys, axis=0))
+        return pd.DataFrame(current, columns=TARGETS, index=df.index)

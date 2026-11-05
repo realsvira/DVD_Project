@@ -1,0 +1,18 @@
+{
+ "experiment": "E6_ens_E2_E5",
+ "case": "pmos_off",
+ "seconds": 0.8,
+ "val_orig_med": 0.0036240682759749983,
+ "val_orig_p95": 0.025635825961613925,
+ "val_orig_id_med": 0.0042878394351859445,
+ "val_orig_ig_med": 0.0020319222408454398,
+ "val_orig_is_med": 0.004904368613327607,
+ "val_orig_ib_med": 0.003272142814541002,
+ "val_targeted_med": 0.005161961842533965,
+ "val_targeted_p95": 0.20144498741379369,
+ "val_targeted_id_med": 0.005604004603267555,
+ "val_targeted_ig_med": 0.0027874762308118996,
+ "val_targeted_is_med": 0.00671633377346394,
+ "val_targeted_ib_med": 0.005540032762592465,
+ "score": 0.015747055728024865
+}

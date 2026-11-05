@@ -11,3 +11,6 @@ xgboost>=2.0
 lightgbm>=4.3
 pytest>=8.0
 tqdm>=4.66
+# Training of the improved (v3) transistor models only; saved models predict with numpy and do NOT need torch.
+# CPU build:  pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+torch==2.8.0

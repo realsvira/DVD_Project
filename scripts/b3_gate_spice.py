@@ -89,6 +89,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--corner-seed", type=int, default=None,
+                    help="different seed = independent corner set (default: config seeds.corners)")
+    ap.add_argument("--out-data", type=Path, default=None, help="default data/gates")
+    ap.add_argument("--out-results", type=Path, default=None, help="default results/b3")
+    ap.add_argument("--no-netlists", action="store_true", help="do not (re)write netlists/gates/*.cir")
     a = ap.parse_args()
     gates = build_gates(CFG)
     sim = NgspiceSimulator.from_config(CFG, workers=a.workers, chunk=50)
@@ -98,7 +103,10 @@ def main() -> int:
         for g in gates.values()))
 
     # ---------------------------------------------------------------- smoke
-    corners = sample_corners(CFG)
+    global OUT_DATA, OUT_RES
+    OUT_DATA = (a.out_data or OUT_DATA).resolve()
+    OUT_RES = (a.out_results or OUT_RES).resolve()
+    corners = sample_corners(CFG, seed=a.corner_seed)
     smoke_c = pd.concat([nominal_corner(), corners.head(1)], ignore_index=True)
     print("== smoke: nominal corner + corner 0, all 18 gate/input cases ==")
     s, d, _ = run(gates, smoke_c, sim, "smoke")
@@ -125,7 +133,7 @@ def main() -> int:
     corners.to_csv(OUT_DATA / "corners.csv", index=False)
     nl = CFG.netlists / "gates"
     nl.mkdir(parents=True, exist_ok=True)
-    for g in gates.values():
+    for g in ([] if a.no_netlists else gates.values()):
         (nl / f"{g.name}.cir").write_text(example_netlist(CFG, g, g.patterns[0], corners.iloc[0]), encoding="utf-8")
 
     n_cases = sum(len(g.patterns) for g in gates.values())

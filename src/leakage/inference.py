@@ -48,8 +48,12 @@ class LeakagePredictor:
 
     def info(self, case: str) -> dict:
         m = self.model(case)
-        return {k: m.meta.get(k) for k in ("algorithm", "params", "transform", "validation_score",
-                                            "created", "n_train", "dataset_sha256")}
+        info = {k: m.meta.get(k) for k in ("algorithm", "params", "transform", "validation_score",
+                                            "created", "n_train", "dataset_sha256", "selected_experiment")}
+        info["algorithm"] = info["algorithm"] or getattr(m, "algo", None)
+        info["params"] = info["params"] or getattr(m, "params", None)
+        info["transform"] = info["transform"] or getattr(getattr(m, "transform", None), "name", None)
+        return info
 
     # ------------------------------------------------------------------ helpers
     @staticmethod

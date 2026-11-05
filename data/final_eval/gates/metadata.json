@@ -1,0 +1,298 @@
+{
+  "created": "2026-11-13T14:25:50",
+  "ngspice": "44.2",
+  "model_sha256": "9ab66a7bc4a547b2f869ceaec03f0a73d90db95cf0a9bb6c581b5a31b2edc2b9",
+  "options": ".options gmin=1e-18 abstol=1e-18 reltol=1e-6 vntol=1e-9",
+  "corners": {
+    "n": 200,
+    "seed": 4004,
+    "rng": "default_rng([seed, corner_id]); VDD, T, NMOS x5, PMOS x5"
+  },
+  "sizing": {
+    "INV": {
+      "mp": {
+        "type": "pmos",
+        "w_nm": 180.0,
+        "d": "out",
+        "g": "a",
+        "s": "vdd",
+        "b": "vdd"
+      },
+      "mn": {
+        "type": "nmos",
+        "w_nm": 90.0,
+        "d": "out",
+        "g": "a",
+        "s": "0",
+        "b": "0"
+      }
+    },
+    "NAND2": {
+      "mpa": {
+        "type": "pmos",
+        "w_nm": 180.0,
+        "d": "out",
+        "g": "a",
+        "s": "vdd",
+        "b": "vdd"
+      },
+      "mpb": {
+        "type": "pmos",
+        "w_nm": 180.0,
+        "d": "out",
+        "g": "b",
+        "s": "vdd",
+        "b": "vdd"
+      },
+      "mna": {
+        "type": "nmos",
+        "w_nm": 180.0,
+        "d": "out",
+        "g": "a",
+        "s": "x",
+        "b": "0"
+      },
+      "mnb": {
+        "type": "nmos",
+        "w_nm": 180.0,
+        "d": "x",
+        "g": "b",
+        "s": "0",
+        "b": "0"
+      }
+    },
+    "NOR2": {
+      "mpa": {
+        "type": "pmos",
+        "w_nm": 360.0,
+        "d": "y",
+        "g": "a",
+        "s": "vdd",
+        "b": "vdd"
+      },
+      "mpb": {
+        "type": "pmos",
+        "w_nm": 360.0,
+        "d": "out",
+        "g": "b",
+        "s": "y",
+        "b": "vdd"
+      },
+      "mna": {
+        "type": "nmos",
+        "w_nm": 90.0,
+        "d": "out",
+        "g": "a",
+        "s": "0",
+        "b": "0"
+      },
+      "mnb": {
+        "type": "nmos",
+        "w_nm": 90.0,
+        "d": "out",
+        "g": "b",
+        "s": "0",
+        "b": "0"
+      }
+    },
+    "AND2": {
+      "mpa": {
+        "type": "pmos",
+        "w_nm": 180.0,
+        "d": "n1",
+        "g": "a",
+        "s": "vdd",
+        "b": "vdd"
+      },
+      "mpb": {
+        "type": "pmos",
+        "w_nm": 180.0,
+        "d": "n1",
+        "g": "b",
+        "s": "vdd",
+        "b": "vdd"
+      },
+      "mna": {
+        "type": "nmos",
+        "w_nm": 180.0,
+        "d": "n1",
+        "g": "a",
+        "s": "x",
+        "b": "0"
+      },
+      "mnb": {
+        "type": "nmos",
+        "w_nm": 180.0,
+        "d": "x",
+        "g": "b",
+        "s": "0",
+        "b": "0"
+      },
+      "mpi": {
+        "type": "pmos",
+        "w_nm": 180.0,
+        "d": "out",
+        "g": "n1",
+        "s": "vdd",
+        "b": "vdd"
+      },
+      "mni": {
+        "type": "nmos",
+        "w_nm": 90.0,
+        "d": "out",
+        "g": "n1",
+        "s": "0",
+        "b": "0"
+      }
+    },
+    "OR2": {
+      "mpa": {
+        "type": "pmos",
+        "w_nm": 360.0,
+        "d": "y",
+        "g": "a",
+        "s": "vdd",
+        "b": "vdd"
+      },
+      "mpb": {
+        "type": "pmos",
+        "w_nm": 360.0,
+        "d": "n1",
+        "g": "b",
+        "s": "y",
+        "b": "vdd"
+      },
+      "mna": {
+        "type": "nmos",
+        "w_nm": 90.0,
+        "d": "n1",
+        "g": "a",
+        "s": "0",
+        "b": "0"
+      },
+      "mnb": {
+        "type": "nmos",
+        "w_nm": 90.0,
+        "d": "n1",
+        "g": "b",
+        "s": "0",
+        "b": "0"
+      },
+      "mpi": {
+        "type": "pmos",
+        "w_nm": 180.0,
+        "d": "out",
+        "g": "n1",
+        "s": "vdd",
+        "b": "vdd"
+      },
+      "mni": {
+        "type": "nmos",
+        "w_nm": 90.0,
+        "d": "out",
+        "g": "n1",
+        "s": "0",
+        "b": "0"
+      }
+    }
+  },
+  "leakage_definition": "I_leak = sum_k V_k*(-i(V_k)) / VDD over Vdd and input sources",
+  "simulations": 3600,
+  "failed": 0,
+  "logic_errors": 0,
+  "wall_seconds": 354.9,
+  "simulator_warnings": {
+    "INV": {
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored.": 800
+    },
+    "NAND2": {
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored.": 1600
+    },
+    "NOR2": {
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored.": 1600
+    },
+    "AND2": {
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored.": 1563,
+      "Warning: toxe, toxp and dtox all given Note: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox Note: Starting dynamic gmin stepping": 1,
+      "WarningNote: Starting dynamic gmin stepping": 2,
+      "Warning: Dynamic gmin stepping failed": 21,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtoxNote: Starting dynamic gmin stepping": 1,
+      "Warning: True gmin stepping failed": 16,
+      "Warning: source stepping failed": 8,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; Note: Starting dynamic gmin stepping": 2,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignorNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all giNote: Starting dynamic gmin stepping": 2,
+      "Warning: toxe, toxp and dtox all given and toxe != toNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all givNote: Starting dynamic gmin stepping": 2,
+      "Warning: toxe, toxp and Note: Starting dynamic gmin stepping": 2,
+      "Warning: toxe, toxp and dtox all given and Note: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp andNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dNote: Starting dynamic gmin stepping": 3,
+      "Warning: toxe, toxp and dtNote: Starting dynamic gmin stepping": 3,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp +Note: Starting dynamic gmin stepping": 1,
+      "Warning: Note: Starting dynamic gmin stepping": 1,
+      "Warning: toxNote: Starting dynamic gmin stepping": 3,
+      "Warning: toxe, toxp and dtoNote: Starting dynamic gmin stepping": 1,
+      "Warning:Note: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox allNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given and toxe != toxpNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given and toxe != toxNote: Starting dynamic gmin stepping": 2,
+      "Warning: toxe, toxp and dtox all given and toxeNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given and toxe Note: Starting dynamic gmin stepping": 2,
+      "Error: Transient op failed, timestep too small": 1,
+      "Error: The operating point could not be simulated successfully.": 1,
+      "DC solution failed -": 1,
+      "vmpa_b#branch      doAnalyses: OP:  Timestep too small; trouble with node \"vmni_b#branch\"": 1,
+      "Warning from checkvalid: vector vdd#branch is not available or has zero length.": 1,
+      "Error during 'write': no writable vector found.": 1
+    },
+    "OR2": {
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored.": 1584,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignNote: Starting dynamic gmin stepping": 2,
+      "Warning: toxe, toxp and dtox all given and toxe !=Note: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + Note: Starting dynamic gmin stepping": 2,
+      "Warning: toxe, toxp and dtox allNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored.Note: Starting dynamic gmin stepping": 2,
+      "Warning: tNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp Note: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given aNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtNote: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; Note: Starting dynamic gmin stepping": 1,
+      "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtoxNote: Starting dynamic gmin stepping": 1,
+      "Warning: Dynamic gmin stepping failed": 2,
+      "Warning: True gmin stepping failed": 1,
+      "Warning: source stepping failed": 1,
+      "Warning: toxe, toxp andNote: Starting dynamic gmin stepping": 1
+    }
+  },
+  "checks": [
+    {
+      "pass": true,
+      "check": "3600 simulations == 3600 expected"
+    },
+    {
+      "pass": true,
+      "check": "converged: 3600/3600"
+    },
+    {
+      "pass": true,
+      "check": "truth table correct: 3600/3600"
+    },
+    {
+      "pass": true,
+      "check": "power balance sources == devices (max rel err 7.8e-07 < 1e-06)"
+    },
+    {
+      "pass": true,
+      "check": "leakage positive and finite"
+    },
+    {
+      "pass": true,
+      "check": "unique (gate, inputs, corner)"
+    }
+  ],
+  "results_sha256": "4bcc82795ca130c52fe129bcb502a4cffca811254907f4043097087ec24a7e50",
+  "corners_sha256": "955f1be9e93832dcb32a52039d4e5d247c1af6c38827a66665cbd78f237d4abd"
+}

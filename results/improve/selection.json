@@ -1,0 +1,50 @@
+{
+  "nmos_on": {
+    "selected": "E6_ens_E2_E5",
+    "score": 0.03801952539763502,
+    "baseline_score": 0.11843870470546689,
+    "candidates": {
+      "E6_ens_E2_E5": 0.03801952539763502,
+      "E5_torch_moredata": 0.044228948170586604,
+      "E2_torch_same": 0.06547260808944146,
+      "E1_ens_v2cache": 0.09139797799030128,
+      "E0_baseline": 0.11843870470546689
+    }
+  },
+  "nmos_off": {
+    "selected": "E5_torch_moredata",
+    "score": 0.011962120825845586,
+    "baseline_score": 0.044150421280494255,
+    "candidates": {
+      "E5_torch_moredata": 0.011962120825845586,
+      "E6_ens_E2_E5": 0.012122081137264476,
+      "E2_torch_same": 0.01731690145908494,
+      "E1_ens_v2cache": 0.03842862718116956,
+      "E0_baseline": 0.044150421280494255
+    }
+  },
+  "pmos_on": {
+    "selected": "E5_torch_moredata",
+    "score": 0.02941844352055771,
+    "baseline_score": 0.10028732878969199,
+    "candidates": {
+      "E5_torch_moredata": 0.02941844352055771,
+      "E6_ens_E2_E5": 0.03408601462811331,
+      "E2_torch_same": 0.04996956459983937,
+      "E1_ens_v2cache": 0.08343883575911237,
+      "E0_baseline": 0.10028732878969199
+    }
+  },
+  "pmos_off": {
+    "selected": "E5_torch_moredata",
+    "score": 0.013785013268287422,
+    "baseline_score": 0.04589258477793759,
+    "candidates": {
+      "E5_torch_moredata": 0.013785013268287422,
+      "E6_ens_E2_E5": 0.015747055728024865,
+      "E2_torch_same": 0.02085815783743051,
+      "E1_ens_v2cache": 0.03959800748283798,
+      "E0_baseline": 0.04589258477793759
+    }
+  }
+}

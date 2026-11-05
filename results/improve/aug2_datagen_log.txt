@@ -1,0 +1,134 @@
+Model 45nm_HP (45nm_HP.pm), VDD 1.0 V, L 45 nm | ngspice 44.2 | 6 workers x chunk 167
+== Generating 4000 valid samples per case -> C:\Users\Saumya\DVD_Project\data\transistor_aug2_on (batch 1000) ==
+
+== Assembling and validating ==
+  nmos_on:
+    [PASS] row count 4000 == 4000
+    [PASS] column order vdd, temp, w, vd, vs, vg, vb, vth0, toxe, ndep, u0, xj, id, ig, is, ib
+    [PASS] all values finite (no NaN/inf)
+    [PASS] vdd in [0.9, 1.1] V
+    [PASS] temp in [-40, 125] C
+    [PASS] w in [45, 360] nm
+    [PASS] 0 <= vd <= vdd
+    [PASS] 0 <= vs <= vdd
+    [PASS] vg == 1*vdd
+    [PASS] vb == 0*vdd
+    [PASS] vth0 within +/-10% of nmos nominal 0.46893
+    [PASS] toxe within +/-10% of nmos nominal 1.25e-09
+    [PASS] ndep within +/-10% of nmos nominal 3.24e+18
+    [PASS] u0 within +/-10% of nmos nominal 0.054
+    [PASS] xj within +/-10% of nmos nominal 1.4e-08
+    [PASS] input rows unique
+    [PASS] sample ids unique
+    [PASS] 4 rows with an exactly-zero SPICE current (allowed: targeted rail biases)
+    [PASS] Kirchhoff |id+ig+is+ib| within tolerance for all rows (max 1.38e-15 A)
+  pmos_on:
+    [PASS] row count 4000 == 4000
+    [PASS] column order vdd, temp, w, vd, vs, vg, vb, vth0, toxe, ndep, u0, xj, id, ig, is, ib
+    [PASS] all values finite (no NaN/inf)
+    [PASS] vdd in [0.9, 1.1] V
+    [PASS] temp in [-40, 125] C
+    [PASS] w in [45, 360] nm
+    [PASS] 0 <= vd <= vdd
+    [PASS] 0 <= vs <= vdd
+    [PASS] vg == 0*vdd
+    [PASS] vb == 1*vdd
+    [PASS] vth0 within +/-10% of pmos nominal -0.49158
+    [PASS] toxe within +/-10% of pmos nominal 1.3e-09
+    [PASS] ndep within +/-10% of pmos nominal 2.44e+18
+    [PASS] u0 within +/-10% of pmos nominal 0.02
+    [PASS] xj within +/-10% of pmos nominal 1.4e-08
+    [PASS] input rows unique
+    [PASS] sample ids unique
+    [PASS] no exactly-zero currents
+    [PASS] Kirchhoff |id+ig+is+ib| within tolerance for all rows (max 2.00e-16 A)
+
+# Part A1 dataset generation summary
+
+- Created: 2026-11-13T15:23:43  |  command: `a1_generate_datasets.py --skip-smoke --no-progress --workers 6 --profile targeted --seed-salt 6 --n 4000 --cases nmos_on pmos_on --out data/transistor_aug2_on`
+- Model `models\45nm_HP.pm` (sha256 9ab66a7bc4a5...), ngspice 44.2
+- Git commit 2188028979 (dirty)
+- Output folder: `data\transistor_aug2_on`
+- This run: 8000 simulations in 84.0 s (95 sim/s)
+
+| Case | Rows | Simulated | Succeeded | Failed | Sample ids | max abs KCL sum (A) | median abs Id (A) | Checks |
+|---|---:|---:|---:|---:|---|---:|---:|---|
+| nmos_on | 4000 | 4000 | 4000 | 0 | 0..3999 | 1.38e-15 | 2.76e-08 | all pass |
+| pmos_on | 4000 | 4000 | 4000 | 0 | 0..3999 | 2.00e-16 | 2.05e-08 | all pass |
+
+Simulator warnings (from successful batches; counts per message):
+
+- nmos_on: Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored. ×4000
+- pmos_on: Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored. ×4000
+
+**Totals:** 8000 simulated, 8000 succeeded, 0 failed (see `failures.csv`).
+**Validation:** all checks passed.
+
+EXIT=0
+Model 45nm_HP (45nm_HP.pm), VDD 1.0 V, L 45 nm | ngspice 44.2 | 6 workers x chunk 167
+== Generating 2000 valid samples per case -> C:\Users\Saumya\DVD_Project\data\transistor_aug2_off (batch 1000) ==
+
+== Assembling and validating ==
+  nmos_off:
+    [PASS] row count 2000 == 2000
+    [PASS] column order vdd, temp, w, vd, vs, vg, vb, vth0, toxe, ndep, u0, xj, id, ig, is, ib
+    [PASS] all values finite (no NaN/inf)
+    [PASS] vdd in [0.9, 1.1] V
+    [PASS] temp in [-40, 125] C
+    [PASS] w in [45, 360] nm
+    [PASS] 0 <= vd <= vdd
+    [PASS] 0 <= vs <= vdd
+    [PASS] vg == 0*vdd
+    [PASS] vb == 0*vdd
+    [PASS] vth0 within +/-10% of nmos nominal 0.46893
+    [PASS] toxe within +/-10% of nmos nominal 1.25e-09
+    [PASS] ndep within +/-10% of nmos nominal 3.24e+18
+    [PASS] u0 within +/-10% of nmos nominal 0.054
+    [PASS] xj within +/-10% of nmos nominal 1.4e-08
+    [PASS] input rows unique
+    [PASS] sample ids unique
+    [PASS] no exactly-zero currents
+    [PASS] Kirchhoff |id+ig+is+ib| within tolerance for all rows (max 9.04e-23 A)
+  pmos_off:
+    [PASS] row count 2000 == 2000
+    [PASS] column order vdd, temp, w, vd, vs, vg, vb, vth0, toxe, ndep, u0, xj, id, ig, is, ib
+    [PASS] all values finite (no NaN/inf)
+    [PASS] vdd in [0.9, 1.1] V
+    [PASS] temp in [-40, 125] C
+    [PASS] w in [45, 360] nm
+    [PASS] 0 <= vd <= vdd
+    [PASS] 0 <= vs <= vdd
+    [PASS] vg == 1*vdd
+    [PASS] vb == 1*vdd
+    [PASS] vth0 within +/-10% of pmos nominal -0.49158
+    [PASS] toxe within +/-10% of pmos nominal 1.3e-09
+    [PASS] ndep within +/-10% of pmos nominal 2.44e+18
+    [PASS] u0 within +/-10% of pmos nominal 0.02
+    [PASS] xj within +/-10% of pmos nominal 1.4e-08
+    [PASS] input rows unique
+    [PASS] sample ids unique
+    [PASS] 82 rows with an exactly-zero SPICE current (allowed: targeted rail biases)
+    [PASS] Kirchhoff |id+ig+is+ib| within tolerance for all rows (max 1.31e-15 A)
+
+# Part A1 dataset generation summary
+
+- Created: 2026-11-13T15:24:25  |  command: `a1_generate_datasets.py --skip-smoke --no-progress --workers 6 --profile targeted --seed-salt 6 --n 2000 --cases nmos_off pmos_off --out data/transistor_aug2_off`
+- Model `models\45nm_HP.pm` (sha256 9ab66a7bc4a5...), ngspice 44.2
+- Git commit 2188028979 (dirty)
+- Output folder: `data\transistor_aug2_off`
+- This run: 4000 simulations in 37.7 s (106 sim/s)
+
+| Case | Rows | Simulated | Succeeded | Failed | Sample ids | max abs KCL sum (A) | median abs Id (A) | Checks |
+|---|---:|---:|---:|---:|---|---:|---:|---|
+| nmos_off | 2000 | 2000 | 2000 | 0 | 0..1999 | 9.04e-23 | 1.50e-11 | all pass |
+| pmos_off | 2000 | 2000 | 2000 | 0 | 0..1999 | 1.31e-15 | 4.24e-11 | all pass |
+
+Simulator warnings (from successful batches; counts per message):
+
+- nmos_off: Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored. ×2000
+- pmos_off: Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored. ×2000
+
+**Totals:** 4000 simulated, 4000 succeeded, 0 failed (see `failures.csv`).
+**Validation:** all checks passed.
+
+EXIT=0

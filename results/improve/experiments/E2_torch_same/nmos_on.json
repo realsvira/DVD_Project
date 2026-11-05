@@ -1,0 +1,20 @@
+{
+ "experiment": "E2_torch_same",
+ "case": "nmos_on",
+ "seconds": 4612.9,
+ "val_orig_med": 0.007874719699444923,
+ "val_orig_p95": 0.039339988195490116,
+ "val_orig_id_med": 0.011930314859364934,
+ "val_orig_ig_med": 0.0036629617368867506,
+ "val_orig_is_med": 0.011927107914966067,
+ "val_orig_ib_med": 0.003978494286561938,
+ "val_targeted_med": 0.021309675451892586,
+ "val_targeted_p95": 0.978268222079964,
+ "val_targeted_id_med": 0.0357645012958155,
+ "val_targeted_ig_med": 0.005944021256725289,
+ "val_targeted_is_med": 0.037819023170597765,
+ "val_targeted_ib_med": 0.005711156084431793,
+ "score": 0.06547260808944146,
+ "n_iter": 15000,
+ "train_loss": 1.807886468487494e-06
+}

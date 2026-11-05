@@ -1,0 +1,23 @@
+{
+  "evaluated": "2026-11-13T17:43:56",
+  "forced": false,
+  "model_hashes": {
+    "before": {
+      "nmos_on": "7f7a14c325bc2e19d3f0f8da17d9f32ea07febea2efe270e58accdebd39c2510",
+      "nmos_off": "f1638c6465cd79f8994335f5936cc4146e7b7ef438a45cbfdd9e63b2bd10dfb6",
+      "pmos_on": "ec74543f32f692233577b960f6a8b11b473f89646720192ab28c0834a1388d5f",
+      "pmos_off": "620ac9e1f1d4ce4bed72213eb2c795759f505cb11960534a82251198b966f635"
+    },
+    "after": {
+      "nmos_on": "4454d2dbc0f47affc694d0cba7838c60a8f0a3483875f1417230b28d9a3d691e",
+      "nmos_off": "4138d1f6e5e7c78829fb46a47db50f0c374d63378b9f4c09e05faffb3542ac28",
+      "pmos_on": "4d8c9c7d86f27d238e80a38fb78896eaa692d04cc455a780563e0cbf339d981a",
+      "pmos_off": "cf96d66537a81f318df3d0b6a68c068e48d0355fba447d6659ef43d812304862"
+    }
+  },
+  "final_eval_data_sha256": {
+    "gates/gate_spice_results.csv": "4bcc82795ca130c52fe129bcb502a4cffca811254907f4043097087ec24a7e50",
+    "gates/corners.csv": "955f1be9e93832dcb32a52039d4e5d247c1af6c38827a66665cbd78f237d4abd",
+    "circuit/cla3_spice_results.csv": "cbc7e0d69848fb671ef5010145f15fdb7b2bb0f5f0a39144ab907c12e0a549f4"
+  }
+}

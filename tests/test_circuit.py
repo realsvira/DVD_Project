@@ -68,12 +68,14 @@ def test_netlist_structure():
     assert f"va0 a0 0 dc {float(c.vdd):.12g}" in net and "va1 a1 0 dc 0" in net   # A=5 -> a0=1, a1=0
 
 
-@pytest.mark.skipif(not (CFG.data / "gates" / "gate_ml_predictions.csv").is_file(), reason="Part B4 not run")
+@pytest.mark.skipif(not (CFG.data / "gates" / "gate_spice_results.csv").is_file(), reason="Part B3 not run")
 def test_cla_ml_equals_sum_of_part_b_gate_predictions():
-    from leakage.gate_ml import GateLeakageModel
+    """The CLA estimate must equal the sum of the gate-model predictions (same models)."""
+    from leakage.gate_ml import GateLeakageModel, predict_gate_records
     gm = GateLeakageModel()
-    b4 = pd.read_csv(CFG.data / "gates" / "gate_ml_predictions.csv", dtype={"inputs": str}).set_index(
-        ["gate", "inputs", "corner_id"]).i_leak_ml
+    refs = pd.read_csv(CFG.data / "gates" / "gate_spice_results.csv", dtype={"inputs": str})
+    g, _ = predict_gate_records(refs[refs.corner_id.isin([0, 7])], gm.predictor)
+    b4 = g.set_index(["gate", "inputs", "corner_id"]).i_leak
     out = predict_circuit_ml(CLA, [5 + 8 * 3], [0, 7], gm.leakage)
     for c in (0, 7):
         expect = sum(b4.loc[(k, b, c)] for _, k, b in gate_patterns(CLA, vector_bits(5 + 8 * 3)))

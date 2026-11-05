@@ -1,0 +1,339 @@
+{
+  "created": "2026-11-13T15:24:25",
+  "command": "a1_generate_datasets.py --skip-smoke --no-progress --workers 6 --profile targeted --seed-salt 6 --n 2000 --cases nmos_off pmos_off --out data/transistor_aug2_off",
+  "git": {
+    "commit": "21880289797ef96784ff2bcb9d140326bcf9e56a",
+    "dirty": true
+  },
+  "versions": {
+    "python": "3.13.14",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "tqdm": "4.70.1"
+  },
+  "platform": "Windows-11-10.0.26300-SP0",
+  "ngspice": {
+    "version": "44.2",
+    "path": "D:\\VLSI\\NGSPICE\\ngspice-44.2_64\\Spice64\\bin\\ngspice_con.exe",
+    "options": ".options gmin=1e-18 abstol=1e-18 reltol=1e-6 vntol=1e-9"
+  },
+  "model": {
+    "name": "45nm_HP",
+    "file": "models\\45nm_HP.pm",
+    "sha256": "9ab66a7bc4a547b2f869ceaec03f0a73d90db95cf0a9bb6c581b5a31b2edc2b9"
+  },
+  "assignment": {
+    "vdd_nominal": 1.0,
+    "lmin": 4.5e-08,
+    "test_circuit": "CLA3"
+  },
+  "sampling": {
+    "n_valid_per_case": 2000,
+    "profile": "targeted",
+    "seed_salt": 6,
+    "vdd_range": [
+      0.9,
+      1.1
+    ],
+    "temp_range_c": [
+      -40.0,
+      125.0
+    ],
+    "w_range_m": [
+      4.5e-08,
+      3.6e-07
+    ],
+    "vd_vs": "independent U(0, vdd)",
+    "process_params": [
+      "vth0",
+      "toxe",
+      "ndep",
+      "u0",
+      "xj"
+    ],
+    "process_tolerance": 0.1,
+    "rng_block": 1000,
+    "rng": "numpy default_rng([case_seed, sample_id // rng_block]); VDD drawn first",
+    "rounding": "inputs rounded to 12 significant digits (= netlist values)",
+    "top_up": "failed samples are not replaced by zeros; extra ids are simulated until n valid samples exist; final = first n valid by sample_id"
+  },
+  "conventions": {
+    "current_sign": "positive = flowing INTO the device terminal (I = -i(Vsource))",
+    "units": "V, degC, m (w), vth0 V, toxe m, ndep cm^-3, u0 m^2/Vs, xj m, A"
+  },
+  "run": {
+    "workers": 6,
+    "chunk": 167,
+    "batch": 1000,
+    "wall_seconds_this_run": 37.74,
+    "simulated_this_run": 4000
+  },
+  "totals": {
+    "simulated": 4000,
+    "succeeded": 4000,
+    "failed": 0
+  },
+  "cases": {
+    "nmos_off": {
+      "device": "nmos",
+      "vg": "0*vdd",
+      "vb": "0*vdd",
+      "seed": 1101,
+      "rows": 2000,
+      "sample_id_range": [
+        0,
+        1999
+      ],
+      "simulated_total": 2000,
+      "succeeded_total": 2000,
+      "failed_total": 0,
+      "simulated_this_run": 2000,
+      "seconds_this_run": 18.99,
+      "simulator_warnings": {
+        "counts": {
+          "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored.": 2000
+        },
+        "shards_without_record": 0
+      },
+      "kcl_abs_max": 9.037311699246953e-23,
+      "kcl_abs_median": 8.405510160356186e-27,
+      "currents": {
+        "id": {
+          "min_abs": 2.647415590497904e-44,
+          "median_abs": 1.4991354526220224e-11,
+          "max_abs": 1.169569598579917e-07,
+          "frac_negative": 0.2305
+        },
+        "ig": {
+          "min_abs": 2.254004264226287e-47,
+          "median_abs": 8.841998620148871e-12,
+          "max_abs": 8.877991393314081e-10,
+          "frac_negative": 0.995
+        },
+        "is": {
+          "min_abs": 8.218572193266029e-49,
+          "median_abs": 1.563503422507704e-11,
+          "max_abs": 1.171923830056906e-07,
+          "frac_negative": 0.224
+        },
+        "ib": {
+          "min_abs": 2.990649169153905e-43,
+          "median_abs": 1.0067997926615216e-14,
+          "max_abs": 7.568973982386509e-12,
+          "frac_negative": 0.998
+        }
+      },
+      "checks": [
+        {
+          "pass": true,
+          "check": "row count 2000 == 2000"
+        },
+        {
+          "pass": true,
+          "check": "column order vdd, temp, w, vd, vs, vg, vb, vth0, toxe, ndep, u0, xj, id, ig, is, ib"
+        },
+        {
+          "pass": true,
+          "check": "all values finite (no NaN/inf)"
+        },
+        {
+          "pass": true,
+          "check": "vdd in [0.9, 1.1] V"
+        },
+        {
+          "pass": true,
+          "check": "temp in [-40, 125] C"
+        },
+        {
+          "pass": true,
+          "check": "w in [45, 360] nm"
+        },
+        {
+          "pass": true,
+          "check": "0 <= vd <= vdd"
+        },
+        {
+          "pass": true,
+          "check": "0 <= vs <= vdd"
+        },
+        {
+          "pass": true,
+          "check": "vg == 0*vdd"
+        },
+        {
+          "pass": true,
+          "check": "vb == 0*vdd"
+        },
+        {
+          "pass": true,
+          "check": "vth0 within +/-10% of nmos nominal 0.46893"
+        },
+        {
+          "pass": true,
+          "check": "toxe within +/-10% of nmos nominal 1.25e-09"
+        },
+        {
+          "pass": true,
+          "check": "ndep within +/-10% of nmos nominal 3.24e+18"
+        },
+        {
+          "pass": true,
+          "check": "u0 within +/-10% of nmos nominal 0.054"
+        },
+        {
+          "pass": true,
+          "check": "xj within +/-10% of nmos nominal 1.4e-08"
+        },
+        {
+          "pass": true,
+          "check": "input rows unique"
+        },
+        {
+          "pass": true,
+          "check": "sample ids unique"
+        },
+        {
+          "pass": true,
+          "check": "no exactly-zero currents"
+        },
+        {
+          "pass": true,
+          "check": "Kirchhoff |id+ig+is+ib| within tolerance for all rows (max 9.04e-23 A)"
+        }
+      ],
+      "csv": "nmos_off.csv",
+      "csv_sha256": "dc7be15dd64959ae07d327a33db5322e688a36dae5a12c02d729f2bed0f47f21"
+    },
+    "pmos_off": {
+      "device": "pmos",
+      "vg": "1*vdd",
+      "vb": "1*vdd",
+      "seed": 1301,
+      "rows": 2000,
+      "sample_id_range": [
+        0,
+        1999
+      ],
+      "simulated_total": 2000,
+      "succeeded_total": 2000,
+      "failed_total": 0,
+      "simulated_this_run": 2000,
+      "seconds_this_run": 18.74,
+      "simulator_warnings": {
+        "counts": {
+          "Warning: toxe, toxp and dtox all given and toxe != toxp + dtox; dtox ignored.": 2000
+        },
+        "shards_without_record": 0
+      },
+      "kcl_abs_max": 1.3098265820435277e-15,
+      "kcl_abs_median": 9.108480971104559e-17,
+      "currents": {
+        "id": {
+          "min_abs": 2.42338070079919e-27,
+          "median_abs": 4.236343884584716e-11,
+          "max_abs": 2.575436935050805e-08,
+          "frac_negative": 0.7855
+        },
+        "ig": {
+          "min_abs": 0.0,
+          "median_abs": 4.746814052936088e-11,
+          "max_abs": 3.138316162498711e-09,
+          "frac_negative": 0.006
+        },
+        "is": {
+          "min_abs": 1.41363874228742e-27,
+          "median_abs": 4.3821648229350034e-11,
+          "max_abs": 2.594861544012745e-08,
+          "frac_negative": 0.7935
+        },
+        "ib": {
+          "min_abs": 0.0,
+          "median_abs": 1.004751837285767e-14,
+          "max_abs": 7.849249028524241e-12,
+          "frac_negative": 0.036
+        }
+      },
+      "checks": [
+        {
+          "pass": true,
+          "check": "row count 2000 == 2000"
+        },
+        {
+          "pass": true,
+          "check": "column order vdd, temp, w, vd, vs, vg, vb, vth0, toxe, ndep, u0, xj, id, ig, is, ib"
+        },
+        {
+          "pass": true,
+          "check": "all values finite (no NaN/inf)"
+        },
+        {
+          "pass": true,
+          "check": "vdd in [0.9, 1.1] V"
+        },
+        {
+          "pass": true,
+          "check": "temp in [-40, 125] C"
+        },
+        {
+          "pass": true,
+          "check": "w in [45, 360] nm"
+        },
+        {
+          "pass": true,
+          "check": "0 <= vd <= vdd"
+        },
+        {
+          "pass": true,
+          "check": "0 <= vs <= vdd"
+        },
+        {
+          "pass": true,
+          "check": "vg == 1*vdd"
+        },
+        {
+          "pass": true,
+          "check": "vb == 1*vdd"
+        },
+        {
+          "pass": true,
+          "check": "vth0 within +/-10% of pmos nominal -0.49158"
+        },
+        {
+          "pass": true,
+          "check": "toxe within +/-10% of pmos nominal 1.3e-09"
+        },
+        {
+          "pass": true,
+          "check": "ndep within +/-10% of pmos nominal 2.44e+18"
+        },
+        {
+          "pass": true,
+          "check": "u0 within +/-10% of pmos nominal 0.02"
+        },
+        {
+          "pass": true,
+          "check": "xj within +/-10% of pmos nominal 1.4e-08"
+        },
+        {
+          "pass": true,
+          "check": "input rows unique"
+        },
+        {
+          "pass": true,
+          "check": "sample ids unique"
+        },
+        {
+          "pass": true,
+          "check": "82 rows with an exactly-zero SPICE current (allowed: targeted rail biases)"
+        },
+        {
+          "pass": true,
+          "check": "Kirchhoff |id+ig+is+ib| within tolerance for all rows (max 1.31e-15 A)"
+        }
+      ],
+      "csv": "pmos_off.csv",
+      "csv_sha256": "389a5442de2d89f32916fe6b73f9e4bb27ec9919adbabb8a8e31411bf206632e"
+    }
+  },
+  "all_checks_passed": true
+}

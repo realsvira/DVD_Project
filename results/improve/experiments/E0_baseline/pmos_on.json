@@ -1,0 +1,20 @@
+{
+ "experiment": "E0_baseline",
+ "case": "pmos_on",
+ "seconds": 0.1,
+ "val_orig_med": 0.03577957453900017,
+ "val_orig_p95": 0.1471088883424213,
+ "val_orig_id_med": 0.05467989698820322,
+ "val_orig_ig_med": 0.014267837567254266,
+ "val_orig_is_med": 0.056837217187603116,
+ "val_orig_ib_med": 0.01733334641294009,
+ "val_targeted_med": 0.07574851882827925,
+ "val_targeted_p95": 0.7433567537786242,
+ "val_targeted_id_med": 0.12803475471465295,
+ "val_targeted_ig_med": 0.024504602203391762,
+ "val_targeted_is_med": 0.1307335384130911,
+ "val_targeted_ib_med": 0.019721179981981217,
+ "score": 0.10028732878969199,
+ "n_iter": 3000,
+ "train_loss": 7.240802544138883e-05
+}

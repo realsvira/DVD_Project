@@ -449,6 +449,44 @@ These results use the final models, which are v2 in all four cases:
 
 Loading turned out negligible here. Nearly all of the error comes from the ML models, and it is *lower* than at gate level because the 36 per-gate errors partly cancel. What remains is a corner-level bias that depends on temperature. Full report: `reports/c_cla3_report.md`; plot: `results/c/fig_cla3_parity.png`.
 
+## Improvement phase (accuracy and reliability)
+
+Full report: `reports/improvement_report.md`. The protocol (`results/improve/selection_rule.md`) was fixed before any experiment ran:
+- every decision used **validation only**;
+- before and after were scored **once** on new, untouched data (fresh transistor tests, plus 200 new corners with seed 5005 and their own gate and CLA SPICE references);
+- original result files and models are preserved. The previous finals are in `trained_models/final_before_improvement/`; Parts B4/C results remain in `results/b4`, `results/c`.
+
+```powershell
+.\.venv\Scripts\python.exe scripts\d1_diagnostics.py                       # error analysis (train/val)
+.\.venv\Scripts\python.exe scripts\d2_experiments.py --exp E1_ens_v2cache E2_torch_same E5_torch_moredata E6_ens_E2_E5
+.\.venv\Scripts\python.exe scripts\d2_experiments.py --select --summary    # -> trained_models\v3
+.\.venv\Scripts\python.exe scripts\d5_op_uniqueness.py --gates data\final_eval\gates data\gates
+.\.venv\Scripts\python.exe scripts\d3_final_eval.py [--refs corrected]     # one-time before/after
+.\.venv\Scripts\python.exe scripts\d4_report.py
+```
+**What limited accuracy:**
+- Every earlier MLP stopped at sklearn's 3,000-iteration L-BFGS cap; training error ≈ validation error, so the models were under-fitted.
+- **Fix:** the same network trained with PyTorch L-BFGS (`src/leakage/torch_mlp.py`, numpy inference) for 15–20k iterations. On validation, median error fell about 4×.
+- After that, the near-rail validation error was 2–18× the training error. So a modest batch of extra targeted transistor samples was added (salt 6).
+- An ensemble was selected for NMOS ON.
+
+**Before → after on the new independent data:**
+
+| Level | Median err | p95 err | Mean accuracy |
+|---|---|---|---|
+| Transistor (spec distribution) | 2.77 % → 0.61 % | 12.0 % → 3.4 % | 95.5 % → 98.6 % |
+| Gates (18 × 200, new corners) | 3.80 % → 0.78 % | 13.7 % → 3.0 % | 95.1 % → 98.9 % |
+| **3-bit CLA (64 × 200, new corners)** | 2.98 % → 0.57 % | 10.1 % → 2.3 % | 96.3 % → **99.24 %** |
+
+**99 % target:** reached at circuit level; **not** reached at gate level (98.9 %) or transistor level (98.6 %).
+
+**SPICE reference integrity:** one new-corner gate record had a spurious operating point.
+- ngspice's default solve converged to a non-physical internal body-node state, which `d5_op_uniqueness.py` detects using SPICE only.
+- It was corrected in a separate file. All other 7,199 gate and 25,600 CLA references are unique.
+- The simulator also now retries isolated non-converging circuits with raised DC iteration limits; this was needed once.
+
+Final transistor models: `trained_models/<case>.joblib` (= `trained_models/v3/`). NMOS ON is an ensemble of two PyTorch MLPs; the other three are single PyTorch MLPs trained with the extra data.
+
 ## Workflow status
 
 | Stage | Status |
@@ -462,6 +500,7 @@ Loading turned out negligible here. Nearly all of the error comes from the ML mo
 | B3. Gate SPICE references (18 cases × 200 corners) | done |
 | B4–5. ML gate prediction and comparison | done |
 | C. 3-bit CLA test circuit (SPICE + hierarchical ML) | done |
+| Improvement phase (v3 models, independent final evaluation) | done |
 | Final written report | next |
 | A2. ML model comparison and selection | - |
 | B. Gate-level validation (18 cases × 200 corners) | - |

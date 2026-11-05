@@ -41,6 +41,9 @@ import pandas as pd
 from .spice import find_ngspice, parse_raw_ascii
 
 END_MARK = "@@END_OF_BATCH"
+RETRY_OPTIONS = ".options itl1=5000 itl2=5000 itl6=500"
+RETRY_NOTE = ("converged only after retry with raised DC iteration limits "
+              "(itl1=itl2=5000, itl6=500); accuracy tolerances unchanged")
 _BENIGN = ("no compatibility mode selected", "simulation executed from .control",
            "comments and warnings go to log-file")
 _ISSUE_WORDS = ("warning", "error", "singular", "timestep too small", "convergence",
@@ -180,6 +183,19 @@ class NgspiceSimulator:
         n = len(circuits)
         vals, ok, raw_msgs, log, crashed = self._execute(circuits, vectors)
 
+        if n == 1 and not ok[0] and RETRY_OPTIONS not in circuits[0]:
+            # Convergence fallback for an isolated failure: raise only the DC iteration limits
+            # (number of Newton / source-stepping iterations allowed). The mandatory accuracy
+            # options (gmin, abstol, reltol, vntol) are untouched, so a converged answer is
+            # as accurate as any other; the retry is recorded in the messages.
+            first_msgs = _issues(log) + raw_msgs[0]
+            retried = circuits[0].rsplit(".end", 1)
+            retry = self._run_chunk([retried[0] + RETRY_OPTIONS + "\n.end" + retried[1]], vectors)
+            if retry.ok[0]:
+                retry.msgs[0] = [RETRY_NOTE]
+                return retry
+            retry.msgs[0] = first_msgs + ["retry with raised iteration limits also failed"] + retry.msgs[0]
+            return retry
         if n == 1:
             msgs = [_issues(log) + raw_msgs[0]] if not ok[0] else [[]]
             if crashed and not ok[0]:
@@ -196,7 +212,8 @@ class NgspiceSimulator:
             single = self._run_chunk([circuits[k]], vectors)
             vals[k], ok[k], msgs[k] = single.vals[0], single.ok[0], single.msgs[0]
             if ok[k] and not crashed:
-                msgs[k] = ["failed in batch, succeeded when simulated alone"]
+                msgs[k] = (single.msgs[0] if RETRY_NOTE in single.msgs[0]
+                           else ["failed in batch, succeeded when simulated alone"])
             warn.update(single.warnings)
         return _Chunk(vals, ok, msgs, warn)
 
