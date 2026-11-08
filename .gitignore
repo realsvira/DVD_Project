@@ -31,3 +31,6 @@ data/**/*.parquet
 results/a2_quick/
 results/a2b/model_cache/
 !**/.gitkeep
+
+# packaged release archives
+dist/

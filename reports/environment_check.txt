@@ -1,4 +1,4 @@
-2026-11-12 23:10:25  Windows-11-10.0.26300-SP0
+2026-11-13 18:45:40  Windows-11-10.0.26300-SP0
 [PASS] Python >= 3.11  -- 3.13.14 at C:\Users\Saumya\DVD_Project\.venv\Scripts\python.exe
 [PASS] Running inside a virtual environment  -- C:\Users\Saumya\DVD_Project\.venv
 [PASS] import numpy  -- 2.5.4
@@ -21,7 +21,7 @@
 [PASS] ngspice executable found  -- D:\VLSI\NGSPICE\ngspice-44.2_64\Spice64\bin\ngspice_con.exe
 [PASS] Using console ngspice build  -- ngspice_con.exe
 [PASS] ngspice responds to -v  -- ngspice 44.2
-[PASS] ngspice batch simulation runs (Python -> ngspice)  -- 0.16 s
+[PASS] ngspice batch simulation runs (Python -> ngspice)  -- 0.03 s
 [PASS] No simulator errors in output
 [PASS] Simulator loaded the assigned model (showmod == file)
 [PASS] NMOS OFF: currents finite and Kirchhoff sum ~ 0  -- Id=1.695e-09, Ig=-1.280e-11, Is=-1.682e-09, Ib=-1.019e-14  |sum|=3.0e-19 A

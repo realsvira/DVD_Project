@@ -1,0 +1,158 @@
+{
+  "models": {
+    "nmos_on": {
+      "algorithm": "ensemble",
+      "params": {
+        "members": [
+          {
+            "algo": "mlp_torch",
+            "hidden": [
+              128,
+              128,
+              128
+            ],
+            "alpha": 1e-05,
+            "max_iter": 15000,
+            "threads": 3,
+            "feature_set": "v2"
+          },
+          {
+            "algo": "mlp_torch",
+            "hidden": [
+              128,
+              128,
+              128
+            ],
+            "alpha": 1e-05,
+            "max_iter": 20000,
+            "threads": 3,
+            "feature_set": "v2"
+          }
+        ]
+      },
+      "transform": "asinh(I/1e-15)",
+      "validation_score": 0.03801952539763502,
+      "created": null,
+      "n_train": null,
+      "dataset_sha256": null,
+      "selected_experiment": "E6_ens_E2_E5"
+    },
+    "nmos_off": {
+      "algorithm": "mlp_torch",
+      "params": {
+        "hidden": [
+          128,
+          128,
+          128
+        ],
+        "alpha": 1e-05,
+        "max_iter": 20000,
+        "threads": 3
+      },
+      "transform": "asinh(I/1e-15)",
+      "validation_score": 0.011962120825845586,
+      "created": null,
+      "n_train": null,
+      "dataset_sha256": null,
+      "selected_experiment": "E5_torch_moredata"
+    },
+    "pmos_on": {
+      "algorithm": "mlp_torch",
+      "params": {
+        "hidden": [
+          128,
+          128,
+          128
+        ],
+        "alpha": 1e-05,
+        "max_iter": 20000,
+        "threads": 3
+      },
+      "transform": "asinh(I/1e-15)",
+      "validation_score": 0.02941844352055771,
+      "created": null,
+      "n_train": null,
+      "dataset_sha256": null,
+      "selected_experiment": "E5_torch_moredata"
+    },
+    "pmos_off": {
+      "algorithm": "mlp_torch",
+      "params": {
+        "hidden": [
+          192,
+          192,
+          192
+        ],
+        "alpha": 1e-07,
+        "max_iter": 20000,
+        "threads": 3
+      },
+      "transform": "asinh(I/1e-15)",
+      "validation_score": 0.013785013268287422,
+      "created": null,
+      "n_train": null,
+      "dataset_sha256": null,
+      "selected_experiment": "E5_torch_moredata"
+    }
+  },
+  "gate_overall": {
+    "Part B/C corners (seed 4004)": {
+      "n": 3600,
+      "spice_median_A": 3.1508438085985e-09,
+      "ml_median_A": 3.153285169551341e-09,
+      "bias": -0.000720521645097086,
+      "median_err": 0.007480650073028558,
+      "p95_err": 0.02801980136478389,
+      "max_err": 0.10571344211652381,
+      "mean_accuracy_pct": 98.97000928423772,
+      "r2_log10": 0.9998827947360894
+    },
+    "independent new corners (seed 5005)": {
+      "n": 3600,
+      "spice_median_A": 3.5556438121717604e-09,
+      "ml_median_A": 3.5504746226902035e-09,
+      "bias": 0.0008930466207285842,
+      "median_err": 0.007795528754500059,
+      "p95_err": 0.03011433359361014,
+      "max_err": 0.1061341583960992,
+      "mean_accuracy_pct": 98.92672053640462,
+      "r2_log10": 0.9998617724359904
+    }
+  },
+  "cla3": {
+    "Part B/C corners (seed 4004)": {
+      "n": 12800,
+      "spice_median_A": 1.8922742970459345e-07,
+      "ml_median_A": 1.8838536542028634e-07,
+      "bias": -0.0010638873442430446,
+      "median_err": 0.005719778177041732,
+      "p95_err": 0.018110983178657926,
+      "max_err": 0.04277370464865267,
+      "mean_accuracy_pct": 99.29760569442152,
+      "r2_log10": 0.9999225247584511
+    },
+    "independent new corners (seed 5005)": {
+      "n": 12800,
+      "spice_median_A": 1.9499650275370517e-07,
+      "ml_median_A": 1.9565785572803688e-07,
+      "bias": 0.0008532920416751074,
+      "median_err": 0.005673333232431815,
+      "p95_err": 0.022585687047570063,
+      "max_err": 0.05120637393162075,
+      "mean_accuracy_pct": 99.23716208503552,
+      "r2_log10": 0.9998821202323346
+    }
+  },
+  "transistor_mean": {
+    "independent test (near-rail / small |Vds|)": {
+      "median_err": 0.01070437716757017,
+      "p95_err": 0.29017797930107114,
+      "mean_accuracy_pct": 76.47529081646096
+    },
+    "independent test (spec distribution)": {
+      "median_err": 0.006097530849535638,
+      "p95_err": 0.03389598712417625,
+      "mean_accuracy_pct": 98.56118438687001
+    }
+  }
+}

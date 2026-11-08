@@ -1,47 +1,91 @@
 # ML-Driven PVT Variation Aware Leakage Estimation
 
-Digital VLSI Design course project. Specification: `DVD_ML_PROJECT.pdf` (the primary reference).
+Digital VLSI Design course project. The specification is `DVD_ML_PROJECT.pdf`, which is the primary reference.
+
+**Team:** Saumya Vira, Anish Toshniwal, Shrenil Patel, Het Selarka.
+
+**What this project does:**
+- **Part A:** learns the four terminal currents (Id, Ig, Is, Ib) of single transistors (NMOS/PMOS, ON/OFF) from 40,000+ ngspice simulations under PVT variation.
+- **Part B:** predicts the leakage of INV, NAND2, NOR2, AND2 and OR2 hierarchically from those transistor models (18 gate/input cases × 200 PVT corners).
+- **Part C:** composes the gate models into the assigned **3-bit carry-lookahead adder** (36 gates, 192 transistors) and validates each level against SPICE.
 
 | Item | Team value |
 |---|---|
-| Model file | **45nm HP**: PTM 45nm High Performance, Metal Gate / High-K / Strained-Si (`models/45nm_HP.pm`) |
-| Nominal VDD | **1.0 V** (sampled 0.9 to 1.1 V) |
-| Channel length | **L = 45 nm**; widths W = 45 to 360 nm |
-| Test circuit | **3-bit carry-lookahead adder** |
-| Simulator | ngspice 44.2 (console build `ngspice_con.exe`) |
-| Language | Python 3.11+ (developed on 3.13, Windows 11) |
+| Model file | **45nm HP**: PTM 45 nm high performance, metal gate / high-k (`models/45nm_HP.pm`) |
+| Nominal VDD | **1.0 V** (sampled 0.9–1.1 V) |
+| Channel length / widths | L = 45 nm; W = 45–360 nm |
+| Test circuit | **3-bit carry-lookahead adder** (Cin = 0, 64 vectors) |
+| Simulator / language | ngspice 44.2 (`ngspice_con.exe`) / Python 3.13.14, Windows 11 |
 
-Team: Saumya Vira, Anish Toshniwal, Shrenil Patel, Het Selarka.
+## Final results (final models, independent evaluation data)
 
----
+| Level | Median error | 95th-percentile error | Mean accuracy* |
+|---|---|---|---|
+| Transistor (fresh test, spec distribution, 4 cases × 4 terminals) | 0.61 % | 3.4 % | 98.56 % |
+| Gates (18 cases × 200 **new** PVT corners) | 0.78 % | 3.0 % | 98.93 % |
+| 3-bit CLA (64 vectors × 200 **new** PVT corners) | 0.57 % | 2.3 % | **99.24 %** |
+
+\*Mean accuracy = 100 % · (1 − mean |ML − SPICE| / SPICE).
+- **99 % target:** reached at circuit level; **not** reached at gate (98.9 %) or transistor (98.6 %) level.
+- **Official Part B/C corners:** gates 98.97 %, CLA 99.30 %.
+- **Full report:** [`reports/FINAL_REPORT.md`](reports/FINAL_REPORT.md), with a self-contained HTML copy at `reports/FINAL_REPORT.html` that can be printed to PDF from a browser.
+- **Requirement → file map:** [`reports/deliverables_checklist.md`](reports/deliverables_checklist.md).
+
+## Quick start (Windows PowerShell, from the project root)
+
+Full installation guide: [`docs/INSTALL_WINDOWS.md`](docs/INSTALL_WINDOWS.md).
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+$env:NGSPICE = "C:\Spice64\bin\ngspice_con.exe"          # wherever ngspice_con.exe is
+.\.venv\Scripts\python.exe run_all.py --mode verify        # env check + 90 tests + deliverable audit (~1 min)
+.\.venv\Scripts\python.exe run_all.py --mode smoke         # small end-to-end run of every stage (~10 min)
+.\.venv\Scripts\python.exe run_all.py --list               # all stages; --mode full regenerates everything
+```
+Predict one transistor with the final models (and compare with ngspice):
+```powershell
+.\.venv\Scripts\python.exe scripts\a2_predict.py --device nmos --vd 1.0 --vg 0 --vs 0 --vb 0 --vdd 1.0 --temp 27 --w 90e-9 --spice
+```
+
+## Stage order (`run_all.py --mode full`)
+
+| # | Stage | Script(s) | Main outputs |
+|---|---|---|---|
+| 0 | environment, inputs | `check_environment.py`, `inventory_inputs.py` | `reports/environment_check.txt`, `reports/input_inventory.md` |
+| A1 | engine, datasets, data check | `a1_smoke_test.py`, `a1_generate_datasets.py`, `a1_data_check.py` | `netlists/transistor/`, `data/transistor/`, `results/data_check/` |
+| A2 | 4 model types × 4 cases | `a2_train_models.py`, `a2_evaluate_test.py` (one-time) | `results/a2/`, model history |
+| A2b | v2 (signed-log Vds, targeted data) | `a2b_train_v2.py`, `a2b_evaluate_test2.py` (one-time) | `results/a2b/` |
+| B3 | gate SPICE references | `b3_gate_spice.py` | `netlists/gates/`, `data/gates/` |
+| B4–5 | hierarchical gate ML | `b4_gate_ml.py` | `results/b4/` (models of that stage) |
+| C | CLA3 SPICE + hierarchical ML | `c1_cla_spice.py`, `c2_cla_ml.py` | `netlists/circuit/`, `data/circuit/`, `results/c/` |
+| D | improvement phase | `d1`–`d5` scripts | `results/improve/`, `trained_models/v3/` |
+| Z | final deliverables, report, audit | `z1_final_deliverables.py`, `z3_build_report.py`, `z2_audit.py` | `results/final/`, `reports/` |
+
+Seeds are fixed in `config/project.toml` (`[seeds]`). Generation stages are resumable, training stages cache every fit, and the one-time evaluations refuse to run twice.
 
 ## Project layout
 
 ```
-Project/
-├─ DVD_ML_PROJECT.pdf, Project-1_*.pdf,     <- supplied inputs, kept untouched
-│  22n_NMOS_ON.net, *.zip, model/, models/
-├─ config/project.toml      <- central configuration (assignment, ranges, seeds, paths)
-├─ src/leakage/             <- Python package
-│   ├─ config.py            <- loads project.toml into a typed Config object
-│   └─ spice.py             <- model-card parsing/editing, ngspice locate/run/parse
-├─ scripts/
-│   ├─ setup_env.ps1        <- one-shot setup (venv + deps + checks)
-│   ├─ inventory_inputs.py  <- extracts every archive, hashes, compares model copies
-│   └─ check_environment.py <- verifies Python, packages, model file, ngspice
-├─ tests/                   <- pytest unit tests (config + SPICE helpers)
-├─ netlists/{transistor,gates,circuit}/   <- example SPICE netlists (deliverable 2)
-├─ data/{transistor,gates,circuit}/       <- generated datasets (CSV)
-├─ trained_models/          <- saved ML models (NOT the SPICE .pm model cards)
-├─ results/  figures/       <- tables, metrics, plots
-├─ reports/                 <- input_inventory.md, environment_check.txt, final report
-└─ inputs/extracted/        <- regenerated extraction of the zip/tar archives
+config/project.toml        central configuration: assignment, ranges, seeds, paths, ngspice
+src/leakage/               package: config, spice, simulator, transistor, dataset, ml, torch_mlp,
+                           inference, gates, gate_ml, circuit
+scripts/                   one script per stage (see table above); run_all.py at the root runs them
+tests/                     pytest suite (90 tests)
+netlists/                  example netlists: transistor (4), gates (5), circuit (CLA3)
+data/                      datasets and SPICE references (transistor, aug, gates, circuit, final_eval)
+trained_models/            final models (*.joblib = v3) + v1/, v2/, v3/, final_before_improvement/
+results/                   per-stage tables and figures; results/final = final-model deliverables
+reports/                   FINAL_REPORT.md/.html, deliverables_checklist.md, stage reports, figures/
+docs/INSTALL_WINDOWS.md    installation guide
+models/, model/, *.pdf, *.zip, 22n_NMOS_ON.net   supplied inputs (unchanged)
 ```
-
-A note on the word "model": `models/*.pm` are **SPICE transistor model cards** (BSIM4).
-They are not ML models. Trained ML models go in `trained_models/`.
+`models/*.pm` are SPICE model cards (BSIM4), not ML models. The ML models are in `trained_models/`.
 
 ---
+
+# Stage details
+
+The sections below document each stage as it was carried out. Numbers quoted inside a stage refer to the models of that stage (v1, v2 and so on); the final numbers are in the table at the top.
 
 ## Setup (Windows)
 
@@ -492,17 +536,11 @@ Final transistor models: `trained_models/<case>.joblib` (= `trained_models/v3/`)
 | Stage | Status |
 |---|---|
 | 0. Setup, inventory, environment check | done |
-| A1. Simulation engine, example netlists, smoke test | done |
-| A1. 4 × 10,000 datasets | done |
-| A1. Data check (Kirchhoff summary, 3 trend plots, quality report) | done |
-| A2. ML model comparison, selection, test evaluation, inference API | done |
-| A2b. Improved v2 models (targeted data, signed-log Vds feature): final = v2 for all four cases (OFF switched after an amendment, disclosed); see `reports/a2b_improvement_report.md` | done |
+| A1. Simulation engine, example netlists, 4 × 10,000 datasets, data check | done |
+| A2. 4 model types × 4 cases, selection, one-time test, inference API | done |
+| A2b. v2 models (signed-log Vds feature, targeted data), one-time fresh test, disclosed OFF amendment | done |
 | B3. Gate SPICE references (18 cases × 200 corners) | done |
-| B4–5. ML gate prediction and comparison | done |
-| C. 3-bit CLA test circuit (SPICE + hierarchical ML) | done |
-| Improvement phase (v3 models, independent final evaluation) | done |
-| Final written report | next |
-| A2. ML model comparison and selection | - |
-| B. Gate-level validation (18 cases × 200 corners) | - |
-| C. 3-bit CLA validation | - |
-| Report | - |
+| B4–5. Hierarchical ML gate leakage | done |
+| C. 3-bit CLA SPICE references + hierarchical ML | done |
+| Improvement phase (v3 models, independent final evaluation, SPICE operating-point check) | done |
+| Final deliverables, technical report, audit, master runner | done |

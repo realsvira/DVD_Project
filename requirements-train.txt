@@ -1,0 +1,3 @@
+# Needed only to re-train the final (v3) transistor models (scripts/d2_experiments.py).
+--index-url https://download.pytorch.org/whl/cpu
+torch==2.8.0
