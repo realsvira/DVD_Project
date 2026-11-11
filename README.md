@@ -33,7 +33,7 @@ Digital VLSI Design course project. The specification is `DVD_ML_PROJECT.pdf`, w
 
 ## Quick start (Windows PowerShell, from the project root)
 
-Full installation guide: [`docs/INSTALL_WINDOWS.md`](docs/INSTALL_WINDOWS.md).
+**New to Python, Git or SPICE?** Follow [`docs/BEGINNER_GUIDE.md`](docs/BEGINNER_GUIDE.md) step by step. The full installation guide is [`docs/INSTALL_WINDOWS.md`](docs/INSTALL_WINDOWS.md).
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
