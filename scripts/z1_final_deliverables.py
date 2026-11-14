@@ -37,7 +37,7 @@ from leakage.circuit import build_cla3, predict_circuit_ml  # noqa: E402
 from leakage.config import load_config  # noqa: E402
 from leakage.gate_ml import GateLeakageModel, predict_gate_records  # noqa: E402
 from leakage.inference import LeakagePredictor  # noqa: E402
-from leakage.ml import INPUTS, TARGETS, evaluate  # noqa: E402
+from leakage.ml import INPUTS, evaluate  # noqa: E402
 
 CFG = load_config()
 OUT = CFG.results / "final"

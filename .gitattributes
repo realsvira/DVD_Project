@@ -1,0 +1,19 @@
+# Line endings of the files whose SHA-256 is recorded and checked (supplied model cards,
+# datasets, SPICE references, metadata, netlists). These rules make a fresh clone reproduce
+# the exact bytes the hashes were computed on, independent of the local core.autocrlf
+# setting and of the operating system. Everything else follows the user's Git defaults.
+
+# supplied BSIM4 model cards: byte-exact as supplied (LF)
+*.pm      -text
+
+# files written by the project on Windows (CRLF), hashed in metadata / audit
+*.csv     text eol=crlf
+*.json    text eol=crlf
+*.cir     text eol=crlf
+*.net     text eol=crlf
+
+# binary artefacts
+*.joblib  binary
+*.png     binary
+*.pdf     binary
+*.zip     binary

@@ -4,7 +4,7 @@
 
 ## Abstract
 
-Leakage current of CMOS logic under process, voltage and temperature (PVT) variation is estimated with machine learning instead of full SPICE simulation. Four transistor-level models (NMOS/PMOS, ON/OFF) predict all four terminal currents (Id, Ig, Is, Ib) from VDD, temperature, width, terminal voltages and five BSIM4 process parameters. Trained on 40,000 SPICE samples (plus 24,000 targeted samples), they are composed hierarchically into gate models (INV, NAND2, NOR2, AND2, OR2) and into a 36-gate, 192-transistor 3-bit carry-lookahead adder. On an independent evaluation set (200 new PVT corners) the hierarchical estimate of the full adder's leakage has a median error of 0.57 %, a 95th-percentile error of 2.26 % and a mean accuracy of **99.24 %**; individual gates reach 98.93 % and transistors (spec distribution) 98.56 %. The 99 % mean-accuracy target is therefore met at circuit level but not at gate or transistor level.
+Leakage current of CMOS logic under process, voltage and temperature (PVT) variation is estimated with machine learning instead of full SPICE simulation. Four transistor-level models (NMOS/PMOS, ON/OFF) predict all four terminal currents (Id, Ig, Is, Ib) from VDD, temperature, width, terminal voltages and five BSIM4 process parameters. They are built from 64,000 single-transistor SPICE simulations (40,000 in the specification distribution plus 24,000 targeted near-rail samples; 49,600 used for fitting) and composed hierarchically into gate models (INV, NAND2, NOR2, AND2, OR2) and into a 36-gate, 192-transistor 3-bit carry-lookahead adder. On an independent evaluation set (200 new PVT corners) the hierarchical estimate of the full adder's leakage has a median error of 0.57 %, a 95th-percentile error of 2.26 % and a mean accuracy of **99.24 %**; individual gates reach 98.93 % and transistors (spec distribution) 98.56 %. The 99 % mean-accuracy target is therefore met at circuit level but not at gate or transistor level.
 
 ## 1. Introduction and objectives
 
@@ -32,7 +32,7 @@ Per transistor sample, independently: VDD ~ U(±10%) drawn first; Vd, Vs ~ U(0, 
 
 40,000 single-transistor simulations, 40,000 succeeded, 0 failed; regenerating from scratch reproduced the four CSVs byte-for-byte. Supplementary targeted samples (near-rail terminals, |Vds| from 1 nV) were generated later for training only (4,000 + 4,000 per ON case, 2,000 + 2,000 per OFF case; separate files). Kirchhoff check (sum of the four terminal currents):
 
-| case | max |ΣI| (A) | median |ΣI| (A) | p95 |ΣI| (A) | over tolerance |
+| case | max \|ΣI\| (A) | median \|ΣI\| (A) | p95 \|ΣI\| (A) | over tolerance |
 |---|---|---|---|---|
 | nmos_on | 1.90e-15 | 7.75e-17 | 3.55e-16 | 0 |
 | nmos_off | 1.87e-23 | 4.19e-27 | 1.89e-25 | 0 |
@@ -43,14 +43,14 @@ The largest residuals (~1e-15 A) occur only when all four currents are tiny; the
 
 | trend | device | unit | dataset (other inputs fixed) | controlled SPICE sweep |
 |---|---|---|---|---|
-| OFF \|Id\| vs temperature | nmos | decades per 10 C | +0.112 | +0.093 |
+| OFF \|Id\| vs temperature | nmos | decades per 10 °C | +0.112 | +0.093 |
 | OFF \|Id\| vs \|vth0\| | nmos | decades per 10 mV | -0.115 | -0.113 |
 | ON \|Ig\| vs toxe | nmos | decades per 0.1 nm | -0.664 | -0.651 |
-| ON \|Ig\| vs temperature | nmos | decades per 10 C | +0.015 | – |
-| OFF \|Id\| vs temperature | pmos | decades per 10 C | +0.104 | +0.086 |
+| ON \|Ig\| vs temperature | nmos | decades per 10 °C | +0.015 | – |
+| OFF \|Id\| vs temperature | pmos | decades per 10 °C | +0.104 | +0.086 |
 | OFF \|Id\| vs \|vth0\| | pmos | decades per 10 mV | -0.099 | -0.108 |
 | ON \|Ig\| vs toxe | pmos | decades per 0.1 nm | -0.588 | -0.585 |
-| ON \|Ig\| vs temperature | pmos | decades per 10 C | +0.003 | – |
+| ON \|Ig\| vs temperature | pmos | decades per 10 °C | +0.003 | – |
 
 ![OFF current vs temperature](figures/fig1_fig_off_current_vs_temperature.png)
 
@@ -58,7 +58,9 @@ The largest residuals (~1e-15 A) occur only when all four currents are tiny; the
 
 ![Gate current vs toxe](figures/fig3_fig_gate_current_vs_toxe.png)
 
-Data-check findings: OFF current falls about one decade per 0.1·VDD of source offset (negative Vgs + body effect; ![source offset](figures/fig4_fig_supp_off_current_vs_source_offset.png)); every non-nominal-toxe sample triggers BSIM4's 'toxe ≠ toxp + dtox, dtox ignored' warning because the specification varies toxe only; OFF-state body current is a nearly constant ~1e-14 A drain-junction current (no junction area/perimeter in the netlists); OFF-state Id flows against Vds in 28–36 % of samples because channel current and gate-to-drain tunnelling nearly cancel. Full report: `reports/a1_data_quality_report.md`.
+Data-check findings: OFF current falls about one decade per 0.1·VDD of source offset (negative Vgs + body effect; figure below); every non-nominal-toxe sample triggers BSIM4's 'toxe ≠ toxp + dtox, dtox ignored' warning because the specification varies toxe only; OFF-state body current is a nearly constant ~1e-14 A drain-junction current (no junction area/perimeter in the netlists); OFF-state Id flows against Vds in 28–36 % of samples because channel current and gate-to-drain tunnelling nearly cancel. Full report: `reports/a1_data_quality_report.md`.
+
+![OFF current vs source offset](figures/fig4_fig_supp_off_current_vs_source_offset.png)
 
 ## 6. ML model comparison, hyperparameters and selection
 
@@ -74,6 +76,8 @@ Target-transform study (LightGBM, validation median relative error):
 | asinh(I/1e-12) | 9.57 % | 10.93 % | 7.43 % | 11.52 % | 9.86 % |
 | asinh(I/1e-09) | 21.73 % | 27.98 % | 13.46 % | 29.31 % | 23.12 % |
 | linear | 33.26 % | 34.71 % | 15.10 % | 33.79 % | 29.21 % |
+
+Sign + log₁₀|I| scored slightly better but needs a separate sign classifier per terminal; asinh(I/1 fA) was chosen as the best transform that every algorithm can use within a single regression model.
 
 Four model types × four cases (validation, best configuration of each type):
 
@@ -132,42 +136,47 @@ Final models on the independent test set (1,500 fresh samples per case, specific
 
 | case | terminal | R²ₜ | median rel. err | p95 rel. err | < 1 % | median abs. err (A) | sign acc. |
 |---|---|---|---|---|---|---|---|
-| nmos_on | id | 1.00000 | 0.94 % | 4.18 % | 52 % | 1.91e-07 | 100.0 % |
-| nmos_on | ig | 0.99997 | 0.29 % | 2.35 % | 86 % | 1.19e-14 | 100.0 % |
-| nmos_on | is | 1.00000 | 0.93 % | 4.57 % | 53 % | 1.91e-07 | 100.0 % |
-| nmos_on | ib | 0.99999 | 0.35 % | 1.31 % | 89 % | 1.62e-15 | 100.0 % |
-| nmos_on | mean | 0.99999 | 0.63 % | 3.10 % | 70 % | 9.55e-08 | 100.0 % |
-| nmos_off | id | 0.99981 | 0.77 % | 4.70 % | 60 % | 4.23e-14 | 100.0 % |
-| nmos_off | ig | 0.99999 | 0.30 % | 1.15 % | 93 % | 1.58e-14 | 100.0 % |
-| nmos_off | is | 0.99884 | 0.89 % | 6.20 % | 54 % | 5.41e-14 | 99.9 % |
-| nmos_off | ib | 0.99998 | 0.16 % | 1.15 % | 93 % | 2.33e-17 | 100.0 % |
-| nmos_off | mean | 0.99965 | 0.53 % | 3.30 % | 75 % | 2.80e-14 | 100.0 % |
-| pmos_on | id | 0.99999 | 1.16 % | 5.62 % | 45 % | 1.39e-07 | 100.0 % |
-| pmos_on | ig | 0.99997 | 0.33 % | 2.04 % | 86 % | 7.49e-14 | 100.0 % |
-| pmos_on | is | 0.99996 | 1.13 % | 5.59 % | 45 % | 1.48e-07 | 100.0 % |
-| pmos_on | ib | 0.99999 | 0.47 % | 1.77 % | 80 % | 1.30e-15 | 100.0 % |
-| pmos_on | mean | 0.99998 | 0.77 % | 3.75 % | 64 % | 7.18e-08 | 100.0 % |
-| pmos_off | id | 0.99390 | 0.67 % | 5.23 % | 64 % | 9.87e-14 | 99.7 % |
-| pmos_off | ig | 0.99998 | 0.31 % | 1.32 % | 92 % | 9.45e-14 | 100.0 % |
-| pmos_off | is | 0.99678 | 0.67 % | 5.28 % | 63 % | 1.10e-13 | 99.9 % |
-| pmos_off | ib | 0.99996 | 0.38 % | 1.79 % | 86 % | 5.89e-17 | 100.0 % |
-| pmos_off | mean | 0.99765 | 0.51 % | 3.40 % | 76 % | 7.58e-14 | 99.9 % |
+| nmos_on | id | 0.999999 | 0.94 % | 4.18 % | 52 % | 1.91e-07 | 100.0 % |
+| nmos_on | ig | 0.999971 | 0.29 % | 2.35 % | 86 % | 1.19e-14 | 100.0 % |
+| nmos_on | is | 0.999999 | 0.93 % | 4.57 % | 53 % | 1.91e-07 | 100.0 % |
+| nmos_on | ib | 0.999994 | 0.35 % | 1.31 % | 89 % | 1.62e-15 | 100.0 % |
+| nmos_on | mean | 0.999991 | 0.63 % | 3.10 % | 70 % | 9.55e-08 | 100.0 % |
+| nmos_off | id | 0.999807 | 0.77 % | 4.70 % | 60 % | 4.23e-14 | 100.0 % |
+| nmos_off | ig | 0.999989 | 0.30 % | 1.15 % | 93 % | 1.58e-14 | 100.0 % |
+| nmos_off | is | 0.998838 | 0.89 % | 6.20 % | 54 % | 5.41e-14 | 99.9 % |
+| nmos_off | ib | 0.999979 | 0.16 % | 1.15 % | 93 % | 2.33e-17 | 100.0 % |
+| nmos_off | mean | 0.999653 | 0.53 % | 3.30 % | 75 % | 2.80e-14 | 100.0 % |
+| pmos_on | id | 0.999991 | 1.16 % | 5.62 % | 45 % | 1.39e-07 | 100.0 % |
+| pmos_on | ig | 0.999973 | 0.33 % | 2.04 % | 86 % | 7.49e-14 | 100.0 % |
+| pmos_on | is | 0.999962 | 1.13 % | 5.59 % | 45 % | 1.48e-07 | 100.0 % |
+| pmos_on | ib | 0.999989 | 0.47 % | 1.77 % | 80 % | 1.30e-15 | 100.0 % |
+| pmos_on | mean | 0.999979 | 0.77 % | 3.75 % | 64 % | 7.18e-08 | 100.0 % |
+| pmos_off | id | 0.993896 | 0.67 % | 5.23 % | 64 % | 9.87e-14 | 99.7 % |
+| pmos_off | ig | 0.999982 | 0.31 % | 1.32 % | 92 % | 9.45e-14 | 100.0 % |
+| pmos_off | is | 0.996778 | 0.67 % | 5.28 % | 63 % | 1.10e-13 | 99.9 % |
+| pmos_off | ib | 0.999956 | 0.38 % | 1.79 % | 86 % | 5.89e-17 | 100.0 % |
+| pmos_off | mean | 0.997653 | 0.51 % | 3.40 % | 76 % | 7.58e-14 | 99.9 % |
 
 Mean over cases and terminals: median 0.61 %, p95 3.39 %, mean accuracy 98.56 %. On the near-rail / small-|Vds| test set: median 1.07 %, p95 29.02 % (a mean-based accuracy is not meaningful there because currents cross zero).
 
 Evolution of the transistor-level median error (mean over 4 terminals; v1 on the A2 test split, v1/v2 on the A2b fresh test, before/after on the independent final test):
 
-| case | v1 (A2 test) | v2 (fresh test) | before improvement (final eval) | final (final eval) |
-|---|---|---|---|---|
-| nmos_on | 2.43 % | 3.53 % | 3.56 % | 0.63 % |
-| nmos_off | 1.54 % | 2.07 % | 2.13 % | 0.53 % |
-| pmos_on | 2.75 % | 3.52 % | 3.58 % | 0.77 % |
-| pmos_off | 1.14 % | 1.82 % | 1.81 % | 0.51 % |
+| case | v1 (A2 test) | v1 (fresh, spec) | v2 (fresh, spec) | v1 (fresh, near-rail) | v2 (fresh, near-rail) | before improvement (final eval) | final (final eval) |
+|---|---|---|---|---|---|---|---|
+| nmos_on | 2.43 % | 2.28 % | 3.53 % | 25.61 % | 7.24 % | 3.56 % | 0.63 % |
+| nmos_off | 1.54 % | 1.49 % | 2.07 % | 3.07 % | 3.06 % | 2.13 % | 0.53 % |
+| pmos_on | 2.75 % | 2.52 % | 3.52 % | 35.43 % | 7.07 % | 3.58 % | 0.77 % |
+| pmos_off | 1.14 % | 1.16 % | 1.82 % | 2.21 % | 2.64 % | 1.81 % | 0.51 % |
 
-![nmos_on](figures/fig5_nmos_on.png)
-![nmos_off](figures/fig5_nmos_off.png)
-![pmos_on](figures/fig5_pmos_on.png)
-![pmos_off](figures/fig5_pmos_off.png)
+v2 has a slightly higher error than v1 on the specification distribution but a 3–5× lower error near the rails in the ON cases, which is where the ON transistors of a static gate operate (Vds ≈ 0). The ON models were selected on validation data before these test numbers were computed; the switch of the OFF models to v2 was decided after they had been seen and is disclosed in `results/a2b/selection_amendment.json`.
+
+![nmos_on: final model vs SPICE](figures/fig5_nmos_on.png)
+
+![nmos_off: final model vs SPICE](figures/fig5_nmos_off.png)
+
+![pmos_on: final model vs SPICE](figures/fig5_pmos_on.png)
+
+![pmos_off: final model vs SPICE](figures/fig5_pmos_off.png)
 
 ## 8. Gate-level SPICE and ML methodology
 
@@ -200,7 +209,7 @@ Static CMOS gates; AND2/OR2 = NAND2/NOR2 + inverter simulated as one netlist. Si
 
 200 corners × 18 cases = 3,600 SPICE runs (0 failed, 0 logic errors). Leakage definition: I_leak = Σ_k V_k·(−i(V_k)) / VDD over the VDD rail and the input sources (static power / VDD, includes gate tunnelling drawn from inputs held high). Every transistor terminal has a 0 V probe; Σ V·I over all terminals equals the source power to 1e-6.
 
-ML gate prediction: each transistor's Vd, Vg, Vs, Vb come from its connections — inputs exactly 0/VDD, bodies on the rails, and **internal/output node voltages (out, x, y, n1) taken from the gate SPICE runs, as the PDF permits; the gate predictions therefore depend on SPICE node voltages**. The ON/OFF model is chosen by gate bias; the AND2/OR2 inverter gate (n1, a few µV from a rail) is snapped to the nearest rail. Leakage = Σ over transistors of (Vd−Vs)·Id + (Vg−Vs)·Ig + (Vb−Vs)·Ib, divided by VDD: identical to the SPICE definition by Tellegen's theorem, KCL-consistent per device, and insensitive to ON-channel currents at Vds ≈ 0. Fed with SPICE's own transistor currents this code reproduces the SPICE leakage of all 3,600 cases. Inference runs with subprocess execution blocked (no hidden SPICE).
+ML gate prediction: each transistor's Vd, Vg, Vs, Vb come from its connections — inputs exactly 0/VDD, bodies on the rails, and **internal/output node voltages (out, x, y, n1) taken from the gate SPICE runs, as the PDF permits; the gate predictions therefore depend on SPICE node voltages**. The ON/OFF model is chosen by gate bias; the AND2/OR2 inverter gate (n1; median 4.6 µV, at most 0.32 mV from a rail) is snapped to the nearest rail. Leakage = Σ over transistors of (Vd−Vs)·Id + (Vg−Vs)·Ig + (Vb−Vs)·Ib, divided by VDD: identical to the SPICE definition by Tellegen's theorem, KCL-consistent per device, and insensitive to ON-channel currents at Vds ≈ 0. Fed with SPICE's own transistor currents this code reproduces the SPICE leakage of all 3,600 cases. Inference runs with subprocess execution blocked (no hidden SPICE).
 
 ## 9. Gate results: gate-level accuracy
 
@@ -227,7 +236,7 @@ Final models, all 18 gate/input cases on the Part B corners (overall median 0.75
 | OR2 | 10 | 4.280e-09 | 4.220e-09 | -0.37 % | 0.76 % | 2.39 % |
 | OR2 | 11 | 3.382e-09 | 3.411e-09 | -0.01 % | 0.77 % | 2.57 % |
 
-Independent new corners: median 0.78 %, p95 3.01 %, mean accuracy **98.93 %**. Most accurate: AND2 00 (0.50 %); NAND2 00 (0.55 %); AND2 10 (0.61 %). Least accurate: NOR2 11 (1.57 %); NOR2 10 (1.29 %); NOR2 01 (0.85 %).
+Independent new corners: median 0.78 %, p95 3.01 %, mean accuracy **98.93 %**. On the Part B corners the most accurate cases are AND2 00 (0.50 %), NAND2 00 (0.55 %), AND2 10 (0.61 %); the least accurate are NOR2 11 (1.57 %), NOR2 10 (1.29 %), NOR2 01 (0.85 %).
 
 ![gate parity](figures/fig6_gate_parity.png)
 
@@ -254,11 +263,27 @@ Composition check (no ML): summing the isolated-gate SPICE leakages reproduces t
 
 ## 12. Detailed error analysis
 
-* **Transistor level.** Ig and Ib are the easiest terminals (median 0.16 %–0.47 %); Id/Is carry most error (median 0.67 %–1.16 %), worst for ON devices at small |Vds| and for OFF devices where the channel and gate-to-drain currents nearly cancel (zero crossings make relative errors unbounded). Sign accuracy 99.7 %–100.0 %.
-* **Optimisation was the dominant limit** of the earlier models (iteration cap, under-fitting); after it was removed, coverage of the near-rail region became the limit, partly fixed with extra targeted data.
-* **Gate level.** OFF transistors at rail biases dominate the remaining gate error. Signed error vs temperature (final models, Part B corners): (-40.0, 15.0]: bias -0.03 %, median |e| 0.67 %; (15.0, 70.0]: bias -0.11 %, median |e| 0.75 %; (70.0, 125.01]: bias -0.07 %, median |e| 0.88 %.
+### 12.1 Transistor level
+
+Ig and Ib are the easiest terminals (median 0.16 %–0.47 %); Id/Is carry most error (median 0.67 %–1.16 %), worst for ON devices at small |Vds| and for OFF devices where the channel and gate-to-drain currents nearly cancel (zero crossings make relative errors unbounded). Sign accuracy 99.7 %–100.0 %. Optimisation was the dominant limit of the earlier models (iteration cap, under-fitting); after it was removed, coverage of the near-rail region became the limit, partly fixed with extra targeted data.
+
+### 12.2 Gate level
+
+Per-device attribution (final models, Part B corners, all 3,600 gate samples): for every transistor instance the device-power error |P_ML − P_SPICE| was computed against the SPICE transistor currents of the same gate run. OFF transistors account for 88.3% of the summed device-power error, and the device with the largest error is an OFF transistor in 85.4% of the gate samples; 89.4% of the OFF-device error comes from OFF devices with (nearly) the full supply across them (|Vds| ≥ 0.9·VDD). In the three least accurate cases the device that most often has the largest error is NOR2 11: mpb (pmos_off, W = 360 nm, 95% of corners); NOR2 10: mpa (pmos_off, W = 360 nm, 56% of corners); NOR2 01: mpb (pmos_off, W = 360 nm, 88% of corners).
+
+Signed error vs temperature (final models, Part B corners):
+
+| temperature | bias (median signed error) | median \|error\| |
+|---|---|---|
+| −40…15 °C | -0.03 % | 0.67 % |
+| 15…70 °C | -0.11 % | 0.75 % |
+| 70…125 °C | -0.07 % | 0.88 % |
+
 ![error vs temperature](figures/fig9_error_vs_temperature.png)
-* **SPICE reference integrity.** One new-corner gate record (AND2 00, corner 83) had a spurious operating point: with rbodymod = 1 ngspice's default solve converged to a non-physical internal body-node state (1.07e-8 A instead of 5.28e-10 A). Re-solving every reference with gmin stepping from the start (SPICE only, no ML) flagged only this record:
+
+### 12.3 SPICE reference integrity
+
+One new-corner gate record (AND2 00, corner 83) had a spurious operating point: with rbodymod = 1 ngspice's default solve converged to a non-physical internal body-node state (1.07e-8 A instead of 5.28e-10 A). Re-solving every reference with gmin stepping from the start (SPICE only, no ML) flagged only this record:
 
 | set | kind | records | flagged | max_rel_diff |
 |---|---|---|---|---|
@@ -267,8 +292,11 @@ Composition check (no ML): summing the isolated-gate SPICE leakages reproduces t
 | data/final_eval/circuit | CLA3 | 12800 | 0 | 1.07e-05 |
 | data/circuit | CLA3 | 12800 | 0 | 9.15e-06 |
 
-  It is corrected in a separate file (original kept); the corrected value is the solution whose transistors match isolated single-transistor SPICE.
-* **Before → after the improvement phase** (independent data, corrected reference):
+It is corrected in a separate file (original kept); the corrected value is the solution whose transistors match isolated single-transistor SPICE.
+
+### 12.4 Before → after the improvement phase
+
+Independent data, corrected reference:
 
 | level | data | models | median err | p95 err | mean accuracy |
 |---|---|---|---|---|---|
@@ -294,7 +322,7 @@ Composition check (no ML): summing the isolated-gate SPICE leakages reproduces t
 
 ## 14. Conclusion
 
-A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level. With 64k SPICE training samples it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with 0.57 % median error and 99.24 % mean accuracy, and individual gates with 98.93 %, evaluated in milliseconds instead of SPICE runs. The decisive factors were the signed-log target, power-based (Tellegen) gate accounting, fully converged network training, targeted data near the rails, and SPICE reference integrity checks. The 99 % target is met at circuit level and narrowly missed at gate and transistor level.
+A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level. Fitted on 49,600 single-transistor SPICE samples (of 64,000 simulated), it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with 0.57 % median error and 99.24 % mean accuracy, and individual gates with 98.93 %, with no SPICE run at prediction time (the gate-internal node voltages are taken from gate-level SPICE references, §8). The decisive factors were the signed-log target, power-based (Tellegen) gate accounting, fully converged network training, targeted data near the rails, and SPICE reference integrity checks. The 99 % target is met at circuit level and narrowly missed at gate and transistor level.
 
 ## 15. References
 

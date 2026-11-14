@@ -73,7 +73,7 @@ At the end you should see a table where every stage says **ok**:
 - **tests:** all 90 automatic tests passed.
 - **audit:** all 12 project deliverables are present and correct.
 
-## Step 6: Run a quick demonstration (about 1–2 minutes)
+## Step 6: Run a quick demonstration (about 3 minutes)
 
 ```powershell
 .\.venv\Scripts\python.exe run_all.py --mode smoke
@@ -143,6 +143,7 @@ That shows every stage.
 |---|---|
 | `python` is not recognized | Python was installed without "Add to PATH". Reinstall Python and tick that box. |
 | `ngspice not found` / `ENVIRONMENT NOT READY` | Redo Step 3; make sure `C:\Spice64\bin\ngspice_con.exe` exists and reopen PowerShell. |
+| `[FAIL] Model file SHA-256 matches config` | Your copy is an old download. Delete the `DVD_Project` folder and do Step 2 again. |
 | `No module named ...` | You used plain `python` instead of `.\.venv\Scripts\python.exe`, or Step 4 did not finish; run Step 4 again. |
 | `cannot be loaded because running scripts is disabled` | Only happens if you try `Activate.ps1`. You don't need it: use `.\.venv\Scripts\python.exe` as shown. |
 | A stage says FAILED | Open the log file it names (in `results\run_logs\`) and read the last lines. |

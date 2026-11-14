@@ -37,7 +37,6 @@ import sys
 import time
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -49,8 +48,7 @@ from leakage.dataset import (TooManyFailures, assemble, current_stats, fmt_secon
                              shard_warnings, simulate_ids, validate)
 from leakage.simulator import NgspiceSimulator  # noqa: E402
 from leakage.spice import ngspice_version  # noqa: E402
-from leakage.transistor import (CURRENT_COLS, case_seed, kcl_residual,  # noqa: E402
-                                simulate_transistors)
+from leakage.transistor import case_seed, kcl_residual, simulate_transistors  # noqa: E402
 
 SMOKE_N = 20
 SMALL_N = 200

@@ -25,7 +25,6 @@ How it works
 """
 from __future__ import annotations
 
-import math
 import subprocess
 import tempfile
 import time

@@ -43,7 +43,7 @@ def SP(x, d=2):
 
 def md(df: pd.DataFrame) -> str:
     cols = list(df.columns)
-    out = ["| " + " | ".join(map(str, cols)) + " |", "|" + "---|" * len(cols)]
+    out = ["| " + " | ".join(str(c).replace("|", "\\|") for c in cols) + " |", "|" + "---|" * len(cols)]
     for _, r in df.iterrows():
         out.append("| " + " | ".join(str(v).replace("|", "\\|") for v in r) + " |")
     return "\n".join(out)
@@ -78,7 +78,8 @@ def main() -> int:
                           "p95 |ΣI| (A)": kcl.p95_abs_A.map(lambda v: f"{v:.2e}"),
                           "over tolerance": kcl.n_over_tolerance})
     slopes = pd.read_csv(R / "data_check" / "trend_slopes.csv")
-    sl_t = pd.DataFrame({"trend": slopes.trend, "device": slopes.device, "unit": slopes.unit,
+    sl_t = pd.DataFrame({"trend": slopes.trend, "device": slopes.device,
+                         "unit": slopes.unit.str.replace("10 C", "10 °C", regex=False),
                          "dataset (other inputs fixed)": slopes.dataset_partial_slope.map(lambda v: f"{v:+.3f}"),
                          "controlled SPICE sweep": slopes.controlled_sweep_slope.map(
                              lambda v: "–" if pd.isna(v) else f"{v:+.3f}")})
@@ -97,7 +98,7 @@ def main() -> int:
 
     tr = pd.read_csv(R / "final" / "transistor_test_results.csv")
     tru = tr[tr.test_set.str.contains("spec")]
-    tr_t = pd.DataFrame({"case": tru.case, "terminal": tru.terminal, "R²ₜ": tru.r2_t.map(lambda v: f"{v:.5f}"),
+    tr_t = pd.DataFrame({"case": tru.case, "terminal": tru.terminal, "R²ₜ": tru.r2_t.map(lambda v: f"{v:.6f}"),
                          "median rel. err": tru.med_rel.map(P), "p95 rel. err": tru.p95_rel.map(P),
                          "< 1 %": tru.frac_rel_lt_1pct.map(lambda v: f"{100 * v:.0f} %"),
                          "median abs. err (A)": tru.med_abs.map(lambda v: f"{v:.2e}"),
@@ -161,9 +162,37 @@ def main() -> int:
         ax.axhline(0, color="k", lw=0.7); ax.grid(True, alpha=0.3); ax.legend()
         ax.set_xlabel("temperature (°C)"); ax.set_ylabel("signed error (%)"); ax.set_title(f"Error vs temperature — {ttl}")
     fig_.tight_layout(); fig_.savefig(FIG / "fig9_error_vs_temperature.png", dpi=200); plt.close(fig_)
-    t_bins = gp.assign(tb=pd.cut(gp.temp, [-40, 15, 70, 125.01])).groupby("tb", observed=True).e.agg(
+    t_bins = gp.assign(tb=pd.cut(gp.temp, [-40, 15, 70, 125.01], include_lowest=True,
+                                 labels=["−40…15 °C", "15…70 °C", "70…125 °C"])).groupby("tb", observed=True).e.agg(
         bias="median", med=lambda e: e.abs().median())
     worst = g18.nlargest(3, "median_err"); best = g18.nsmallest(3, "median_err")
+
+    # device-level error attribution: final models vs SPICE device currents (Part B corners)
+    from leakage.gate_ml import predict_gate_records  # noqa: E402
+    from leakage.inference import LeakagePredictor  # noqa: E402
+    key = ["gate", "inputs", "corner_id"]
+    grefs = pd.read_csv(CFG.data / "gates" / "gate_spice_results.csv", dtype={"inputs": str})
+    gcols = key + ["vdd", "temp"] + [c for c in grefs.columns if c[:2] in ("n_", "p_")] + \
+        [c for c in ("v_out", "v_x", "v_y", "v_n1") if c in grefs]
+    _, dv = predict_gate_records(grefs[gcols], LeakagePredictor())
+    sdev = pd.read_csv(CFG.data / "gates" / "gate_spice_devices.csv", dtype={"inputs": str})
+    dv = dv.merge(sdev[key + ["device", "id", "ig", "ib"]].rename(columns={"id": "id_s", "ig": "ig_s", "ib": "ib_s"}),
+                  on=key + ["device"], validate="one_to_one")
+    vds, vgs, vbs = dv.vd - dv.vs, dv.vg_node - dv.vs, dv.vb - dv.vs
+    dv["dp"] = (vds * (dv.id - dv.id_s) + vgs * (dv.ig - dv.ig_s) + vbs * (dv.ib - dv.ib_s)).abs()
+    off = dv.state == "off"
+    off_share = dv.dp[off].sum() / dv.dp.sum()
+    dom = dv.loc[dv.groupby(key).dp.idxmax()]
+    dom_off = (dom.state == "off").mean()
+    rail = vds.abs() >= 0.9 * dv.vdd
+    off_rail = dv.dp[off & rail].sum() / dv.dp[off].sum()
+    worst_dom = []
+    for r in worst.itertuples():
+        d = dom[(dom.gate == r.gate) & (dom.inputs == r.inputs)]
+        top = d.device.value_counts()
+        row = d[d.device == top.index[0]].iloc[0]
+        worst_dom.append(f"{r.gate} {r.inputs}: {top.index[0]} ({row.case}, W = {row.w * 1e9:.0f} nm, "
+                         f"{top.iloc[0] / len(d):.0%} of corners)")
 
     # ------------------------------------------------------------------ sizing table
     gates = build_gates(CFG)
@@ -185,7 +214,8 @@ def main() -> int:
           "Leakage current of CMOS logic under process, voltage and temperature (PVT) variation is estimated with machine "
           "learning instead of full SPICE simulation. Four transistor-level models (NMOS/PMOS, ON/OFF) predict all four "
           "terminal currents (Id, Ig, Is, Ib) from VDD, temperature, width, terminal voltages and five BSIM4 process "
-          "parameters. Trained on 40,000 SPICE samples (plus 24,000 targeted samples), they are composed hierarchically "
+          "parameters. They are built from 64,000 single-transistor SPICE simulations (40,000 in the specification "
+          "distribution plus 24,000 targeted near-rail samples; 49,600 used for fitting) and composed hierarchically "
           "into gate models (INV, NAND2, NOR2, AND2, OR2) and into a 36-gate, 192-transistor 3-bit carry-lookahead adder. "
           f"On an independent evaluation set (200 new PVT corners) the hierarchical estimate of the full adder's leakage "
           f"has a median error of {P(cN['median_err'])}, a 95th-percentile error of {P(cN['p95_err'])} and a mean accuracy "
@@ -236,11 +266,12 @@ def main() -> int:
           f"![OFF current vs temperature]({f_trend[0]})", "", f"![OFF current vs vth0]({f_trend[1]})", "",
           f"![Gate current vs toxe]({f_trend[2]})", "",
           "Data-check findings: OFF current falls about one decade per 0.1·VDD of source offset (negative Vgs + body "
-          f"effect; ![source offset]({f_trend[3]})); every non-nominal-toxe sample triggers BSIM4's 'toxe ≠ toxp + dtox, "
+          "effect; figure below); every non-nominal-toxe sample triggers BSIM4's 'toxe ≠ toxp + dtox, "
           "dtox ignored' warning because the specification varies toxe only; OFF-state body current is a nearly constant "
           "~1e-14 A drain-junction current (no junction area/perimeter in the netlists); OFF-state Id flows against Vds in "
           "28–36 % of samples because channel current and gate-to-drain tunnelling nearly cancel. Full report: "
           "`reports/a1_data_quality_report.md`.", "",
+          f"![OFF current vs source offset]({f_trend[3]})", "",
           "## 6. ML model comparison, hyperparameters and selection", "",
           "Split 70/15/15 per case (7,000 / 1,500 / 1,500) with a fixed seed; scalers fit on training data; tuning and "
           "selection on validation only; test sets evaluated once. Features: VDD, T (K), log₁₀W, Vd, Vs, Vds, |Vds|, Vgs, "
@@ -248,6 +279,8 @@ def main() -> int:
           "from v2 on). Targets: all four currents jointly, transformed with asinh(I/1 fA) (a signed log that is smooth "
           "through zero). Error metric: |I_pred − I_SPICE| / max(|I_SPICE|, 1 fA).", "",
           "Target-transform study (LightGBM, validation median relative error):", "", md(ts_t), "",
+          "Sign + log₁₀|I| scored slightly better but needs a separate sign classifier per terminal; asinh(I/1 fA) was "
+          "chosen as the best transform that every algorithm can use within a single regression model.", "",
           "Four model types × four cases (validation, best configuration of each type):", "", md(vc_t), "",
           hp_lines, "",
           "The MLP (tanh, three hidden layers of 128) won every case by 3–5×: the currents are smooth exponential "
@@ -273,11 +306,17 @@ def main() -> int:
           "Evolution of the transistor-level median error (mean over 4 terminals; v1 on the A2 test split, v1/v2 on the "
           "A2b fresh test, before/after on the independent final test):", "",
           md(pd.DataFrame([{"case": c, "v1 (A2 test)": P(hist_a2[c]),
-                            "v2 (fresh test)": P(t2[(t2.case == c) & (t2.model == "v2") & (t2.test_set == "uniform")].med_rel.iloc[0]),
+                            **{f"{v} (fresh, {lbl})": P(t2[(t2.case == c) & (t2.model == v) & (t2.test_set == ts)].med_rel.iloc[0])
+                               for ts, lbl in (("uniform", "spec"), ("targeted", "near-rail")) for v in ("v1", "v2")},
                             "before improvement (final eval)": P(fbu[(c, "before")]),
-                            "final (final eval)": P(fbu[(c, "after")])} for c in CFG.cases])), ""]
-    L += [f"![{c}]({f})" for c, f in zip(CFG.cases, f_tr)]
-    L += ["", "## 8. Gate-level SPICE and ML methodology", "",
+                            "final (final eval)": P(fbu[(c, "after")])} for c in CFG.cases])), "",
+          "v2 has a slightly higher error than v1 on the specification distribution but a 3–5× lower error near the rails "
+          "in the ON cases, which is where the ON transistors of a static gate operate (Vds ≈ 0). The ON models were "
+          "selected on validation data before these test numbers were computed; the switch of the OFF models to v2 was "
+          "decided after they had been seen and is disclosed in `results/a2b/selection_amendment.json`.", ""]
+    for c, f in zip(CFG.cases, f_tr):
+        L += [f"![{c}: final model vs SPICE]({f})", ""]
+    L += ["## 8. Gate-level SPICE and ML methodology", "",
           "Static CMOS gates; AND2/OR2 = NAND2/NOR2 + inverter simulated as one netlist. Sizing (not specified by the PDF): "
           "equal-drive sizing, unit inverter Wn = 2Lmin, Wp = 4Lmin, series pairs 2×, all within the ML training range:", "",
           md(sizing), "",
@@ -288,7 +327,8 @@ def main() -> int:
           "ML gate prediction: each transistor's Vd, Vg, Vs, Vb come from its connections — inputs exactly 0/VDD, bodies on "
           "the rails, and **internal/output node voltages (out, x, y, n1) taken from the gate SPICE runs, as the PDF "
           "permits; the gate predictions therefore depend on SPICE node voltages**. The ON/OFF model is chosen by gate bias; "
-          "the AND2/OR2 inverter gate (n1, a few µV from a rail) is snapped to the nearest rail. Leakage = Σ over "
+          f"the AND2/OR2 inverter gate (n1; median {1e6 * dv[dv.node_g == 'n1'].vg_snap.median():.1f} µV, at most "
+          f"{1e3 * dv[dv.node_g == 'n1'].vg_snap.max():.2f} mV from a rail) is snapped to the nearest rail. Leakage = Σ over "
           "transistors of (Vd−Vs)·Id + (Vg−Vs)·Ig + (Vb−Vs)·Ib, divided by VDD: identical to the SPICE definition by "
           "Tellegen's theorem, KCL-consistent per device, and insensitive to ON-channel currents at Vds ≈ 0. Fed with SPICE's "
           "own transistor currents this code reproduces the SPICE leakage of all 3,600 cases. Inference runs with "
@@ -298,9 +338,9 @@ def main() -> int:
           f"{P(gB['p95_err'])}, bias {SP(gB['bias'], 3)}, mean accuracy **{gB['mean_accuracy_pct']:.2f} %**, R²(log₁₀) "
           f"{gB['r2_log10']:.5f}):", "", md(g18_t), "",
           f"Independent new corners: median {P(gN['median_err'])}, p95 {P(gN['p95_err'])}, mean accuracy "
-          f"**{gN['mean_accuracy_pct']:.2f} %**. Most accurate: " +
-          "; ".join(f"{r.gate} {r.inputs} ({P(r.median_err)})" for r in best.itertuples()) + ". Least accurate: " +
-          "; ".join(f"{r.gate} {r.inputs} ({P(r.median_err)})" for r in worst.itertuples()) + ".", "",
+          f"**{gN['mean_accuracy_pct']:.2f} %**. On the Part B corners the most accurate cases are " +
+          ", ".join(f"{r.gate} {r.inputs} ({P(r.median_err)})" for r in best.itertuples()) + "; the least accurate are " +
+          ", ".join(f"{r.gate} {r.inputs} ({P(r.median_err)})" for r in worst.itertuples()) + ".", "",
           f"![gate parity]({f_gate})", "", "![gate error by case](figures/fig7_gate_error_by_case.png)", "",
           "## 10. Larger circuit implementation", "",
           "Gi = Ai·Bi, Pi = Ai ⊕ Bi, C1 = G0 + P0·C0, C2 = G1 + P1·G0 + P1·P0·C0, C3 = G2 + P2·G1 + P2·P1·G0 + P2·P1·P0·C0 "
@@ -326,24 +366,34 @@ def main() -> int:
           "negligible at leakage-level currents, so the circuit error is the transistor-ML error; it is smaller than the "
           "gate-level error because the 36 per-gate errors partly cancel.", "",
           "## 12. Detailed error analysis", "",
-          f"* **Transistor level.** Ig and Ib are the easiest terminals (median {P(gib.min())}–{P(gib.max())}); Id/Is "
-          f"carry most error (median {P(dis.min())}–{P(dis.max())}), worst for ON devices at small |Vds| and for OFF devices "
-          "where the channel and gate-to-drain currents nearly cancel (zero crossings make relative errors unbounded). "
-          f"Sign accuracy {P(tru[tru.terminal != 'mean'].sign_acc.min(), 1)}–{P(tru[tru.terminal != 'mean'].sign_acc.max(), 1)}.",
-          "* **Optimisation was the dominant limit** of the earlier models (iteration cap, under-fitting); after it was "
-          "removed, coverage of the near-rail region became the limit, partly fixed with extra targeted data.",
-          "* **Gate level.** OFF transistors at rail biases dominate the remaining gate error. Signed error vs temperature "
-          "(final models, Part B corners): " + "; ".join(f"{iv}: bias {SP(r.bias)}, median |e| {P(r.med)}"
-                                                         for iv, r in t_bins.iterrows()) + ".",
-          "![error vs temperature](figures/fig9_error_vs_temperature.png)",
-          "* **SPICE reference integrity.** One new-corner gate record (AND2 00, corner 83) had a spurious operating point: "
-          "with rbodymod = 1 ngspice's default solve converged to a non-physical internal body-node state (1.07e-8 A "
-          "instead of 5.28e-10 A). Re-solving every reference with gmin stepping from the start (SPICE only, no ML) flagged "
-          "only this record:", "", md(opu[["set", "kind", "records", "flagged", "max_rel_diff"]].assign(
+          "### 12.1 Transistor level", "",
+          f"Ig and Ib are the easiest terminals (median {P(gib.min())}–{P(gib.max())}); Id/Is carry most error (median "
+          f"{P(dis.min())}–{P(dis.max())}), worst for ON devices at small |Vds| and for OFF devices where the channel and "
+          "gate-to-drain currents nearly cancel (zero crossings make relative errors unbounded). Sign accuracy "
+          f"{P(tru[tru.terminal != 'mean'].sign_acc.min(), 1)}–{P(tru[tru.terminal != 'mean'].sign_acc.max(), 1)}. "
+          "Optimisation was the dominant limit of the earlier models (iteration cap, under-fitting); after it was removed, "
+          "coverage of the near-rail region became the limit, partly fixed with extra targeted data.", "",
+          "### 12.2 Gate level", "",
+          "Per-device attribution (final models, Part B corners, all 3,600 gate samples): for every transistor instance "
+          "the device-power error |P_ML − P_SPICE| was computed against the SPICE transistor currents of the same gate "
+          f"run. OFF transistors account for {off_share:.1%} of the summed device-power error, and the device with the "
+          f"largest error is an OFF transistor in {dom_off:.1%} of the gate samples; {off_rail:.1%} of the OFF-device "
+          "error comes from OFF devices with (nearly) the full supply across them (|Vds| ≥ 0.9·VDD). In the three least "
+          "accurate cases the device that most often has the largest error is " + "; ".join(worst_dom) + ".", "",
+          "Signed error vs temperature (final models, Part B corners):", "",
+          md(pd.DataFrame([{"temperature": str(iv), "bias (median signed error)": SP(r.bias),
+                            "median |error|": P(r.med)} for iv, r in t_bins.iterrows()])), "",
+          "![error vs temperature](figures/fig9_error_vs_temperature.png)", "",
+          "### 12.3 SPICE reference integrity", "",
+          "One new-corner gate record (AND2 00, corner 83) had a spurious operating point: with rbodymod = 1 ngspice's "
+          "default solve converged to a non-physical internal body-node state (1.07e-8 A instead of 5.28e-10 A). "
+          "Re-solving every reference with gmin stepping from the start (SPICE only, no ML) flagged only this record:", "",
+          md(opu[["set", "kind", "records", "flagged", "max_rel_diff"]].assign(
               max_rel_diff=lambda d: d.max_rel_diff.map(lambda v: f"{v:.2e}"), set=lambda d: d.set.str.replace("\\", "/"))), "",
-          "  It is corrected in a separate file (original kept); the corrected value is the solution whose transistors "
-          "match isolated single-transistor SPICE.",
-          "* **Before → after the improvement phase** (independent data, corrected reference):", "",
+          "It is corrected in a separate file (original kept); the corrected value is the solution whose transistors "
+          "match isolated single-transistor SPICE.", "",
+          "### 12.4 Before → after the improvement phase", "",
+          "Independent data, corrected reference:", "",
           md(pd.DataFrame([{"level": r.level, "data": r.dataset, "models": r.models, "median err": P(r.median_err),
                             "p95 err": P(r.p95_err), "mean accuracy": f"{r.mean_accuracy_pct:.2f} %"}
                            for r in ba.itertuples()])), "", f"![before after]({f_ba})", "",
@@ -363,10 +413,11 @@ def main() -> int:
           "* Earlier test sets were reused across model versions (disclosed); the primary claims use data created for, and "
           "evaluated once in, the final phase.", "",
           "## 14. Conclusion", "",
-          f"A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level. With 64k "
-          f"SPICE training samples it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with "
+          f"A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level. Fitted on "
+          f"49,600 single-transistor SPICE samples (of 64,000 simulated), it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with "
           f"{P(cN['median_err'])} median error and {cN['mean_accuracy_pct']:.2f} % mean accuracy, and individual gates with "
-          f"{gN['mean_accuracy_pct']:.2f} %, evaluated in milliseconds instead of SPICE runs. The decisive factors were the "
+          f"{gN['mean_accuracy_pct']:.2f} %, with no SPICE run at prediction time (the gate-internal node voltages "
+          "are taken from gate-level SPICE references, §8). The decisive factors were the "
           "signed-log target, power-based (Tellegen) gate accounting, fully converged network training, targeted data near "
           "the rails, and SPICE reference integrity checks. The 99 % target is met at circuit level and narrowly missed at "
           "gate and transistor level.", "",

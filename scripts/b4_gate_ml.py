@@ -43,7 +43,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from leakage.config import load_config  # noqa: E402
 from leakage.gate_ml import device_power, predict_gate_records  # noqa: E402
-from leakage.gates import build_gates  # noqa: E402
 from leakage.inference import LeakagePredictor  # noqa: E402
 
 CFG = load_config()
@@ -147,8 +146,8 @@ def main() -> int:
         columns={"id": "id_spice", "ig": "ig_spice", "is": "is_spice", "ib": "ib_spice"}),
         on=KEY + ["device"], validate="one_to_one")
     dev["p_ml"] = device_power(dev)
-    dev["p_spice"] = device_power(dev, prefix="") if False else (
-        (dev.vd - dev.vs) * dev.id_spice + (dev.vg_node - dev.vs) * dev.ig_spice + (dev.vb - dev.vs) * dev.ib_spice)
+    dev["p_spice"] = ((dev.vd - dev.vs) * dev.id_spice + (dev.vg_node - dev.vs) * dev.ig_spice
+                      + (dev.vb - dev.vs) * dev.ib_spice)
     dev.to_csv(GD / "gate_ml_devices.csv", index=False)
 
     # -------------------------------------------------------------- 18-case table

@@ -78,7 +78,7 @@ Logs are written to `results\run_logs\`.
 | Command | What it does | Time |
 |---|---|---|
 | `python run_all.py --list` | lists every stage of every mode | – |
-| `python run_all.py --mode smoke` | small end-to-end check of every stage (writes only to `data\transistor_small`, `results\a2_quick` and smoke files) | ~10 min |
+| `python run_all.py --mode smoke` | small end-to-end check of every stage (writes only to `data\transistor_small`, `results\a2_quick` and smoke files) | ~3 min |
 | `python run_all.py --mode full` | regenerates everything in the original order | many hours (training dominates) |
 | `python run_all.py --mode full --from b3` | resumes from a stage | – |
 | `python run_all.py --mode full --only c1 c2` | runs only selected stages | – |
@@ -96,6 +96,7 @@ Notes:
 |---|---|
 | `ngspice` "not recognized" | Use the full path to `ngspice_con.exe`, or set `NGSPICE` (step 3). |
 | `ENVIRONMENT NOT READY`: ngspice not found | Same as above; `check_environment.py` prints where it looked. |
+| `[FAIL] Model file SHA-256 matches config` | The copy was checked out with converted line endings (a clone made before `.gitattributes` was added). Delete the folder and clone again. |
 | `ModuleNotFoundError` | Use the venv's Python (`.\.venv\Scripts\python.exe`) and reinstall the requirements. |
 | Garbled characters in console output | Run `$env:PYTHONIOENCODING = "utf-8"`; the runner sets it for child processes. |
 | A one-time evaluation says "refusing to evaluate again" | Expected: those results already exist. Use `--force` only to deliberately repeat it. |

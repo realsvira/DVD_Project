@@ -39,7 +39,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 $env:NGSPICE = "C:\Spice64\bin\ngspice_con.exe"          # wherever ngspice_con.exe is
 .\.venv\Scripts\python.exe run_all.py --mode verify        # env check + 90 tests + deliverable audit (~1 min)
-.\.venv\Scripts\python.exe run_all.py --mode smoke         # small end-to-end run of every stage (~10 min)
+.\.venv\Scripts\python.exe run_all.py --mode smoke         # small end-to-end run of every stage (~3 min)
 .\.venv\Scripts\python.exe run_all.py --list               # all stages; --mode full regenerates everything
 ```
 Predict one transistor with the final models (and compare with ngspice):
@@ -76,7 +76,7 @@ data/                      datasets and SPICE references (transistor, aug, gates
 trained_models/            final models (*.joblib = v3) + v1/, v2/, v3/, final_before_improvement/
 results/                   per-stage tables and figures; results/final = final-model deliverables
 reports/                   FINAL_REPORT.md/.html, deliverables_checklist.md, stage reports, figures/
-docs/INSTALL_WINDOWS.md    installation guide
+docs/                      INSTALL_WINDOWS.md (installation), BEGINNER_GUIDE.md (step by step from zero)
 models/, model/, *.pdf, *.zip, 22n_NMOS_ON.net   supplied inputs (unchanged)
 ```
 `models/*.pm` are SPICE model cards (BSIM4), not ML models. The ML models are in `trained_models/`.
@@ -124,11 +124,11 @@ $env:NGSPICE = "C:\Spice64\bin\ngspice_con.exe"
 ```
 Optional: to add it permanently to your **user** PATH (open a new terminal afterwards):
 ```powershell
-[Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path","User") + ";D:\VLSI\NGSPICE\ngspice-44.2_64\Spice64\bin", "User")
+[Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path","User") + ";C:\Spice64\bin", "User")   # the folder that contains ngspice_con.exe
 ```
 
 ### 3. Create the virtual environment and install dependencies
-From the project root (`D:\DVD\Project`):
+From the project root (the `DVD_Project` folder):
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
@@ -243,7 +243,7 @@ That file was used for reference only. Its Linux `.include` path, `GMIN=1e-20` o
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q tests
 .\.venv\Scripts\python.exe scripts\a1_smoke_test.py
-& "D:\VLSI\NGSPICE\ngspice-44.2_64\Spice64\bin\ngspice_con.exe" -b netlists\transistor\nmos_on.cir
+& $env:NGSPICE -b netlists\transistor\nmos_on.cir      # NGSPICE = full path of ngspice_con.exe
 ```
 The smoke-test results go to `results/a1_smoke_test.csv`, `results/a1_corner_sweep.csv` and `reports/a1_smoke_test.md`.
 
@@ -402,7 +402,7 @@ Plots: `results/a2/fig_pred_vs_spice_<case>.png`. Validation table: `results/a2/
 ```powershell
 .\.venv\Scripts\python.exe scripts\b3_gate_spice.py --smoke   # nominal corner + corner 0, 36 sims, ~10 s
 .\.venv\Scripts\python.exe scripts\b3_gate_spice.py           # smoke first, then 18 x 200 = 3,600 sims (~5-12 min)
-& "D:\VLSI\NGSPICE\ngspice-44.2_64\Spice64\bin\ngspice_con.exe" -b netlists\gates\NAND2.cir
+& $env:NGSPICE -b netlists\gates\NAND2.cir
 ```
 - **Gates** (`src/leakage/gates.py`; topologies are stored as data so Part B step 4 and Part C can reuse them):
   - INV, NAND2, NOR2, and AND2/OR2, which are NAND2/NOR2 followed by an inverter and simulated as one netlist.
@@ -447,7 +447,7 @@ gm.leakage("NAND2", "01", [0, 1, 2])      # predicted I_leak (A) at corners 0..2
 
 **Results** (`results/b4/`, `reports/b4_gate_ml_report.md`), over 3,600 predictions:
 
-These results use the final models, which are v2 in all four cases:
+These results use the models of that stage (v2 in all four cases; the final v3 results are in the table at the top):
 
 | Metric | Value |
 |---|---|

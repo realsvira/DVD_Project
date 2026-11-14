@@ -142,7 +142,6 @@ def main() -> int:
                   f"targeted {r['val_targeted_med']:.4f}/{r['val_targeted_p95']:.3f}  {secs:.0f}s "
                   f"iters={r.get('n_iter')}", flush=True)
     if a.select:
-        import shutil
         rows = [json.loads(f.read_text(encoding="utf-8")) for f in OUT.glob("*/*.json")]
         t = pd.DataFrame(rows)
         v3 = CFG.trained_models / "v3"
