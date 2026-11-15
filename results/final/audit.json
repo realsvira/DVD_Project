@@ -311,7 +311,8 @@
   "files": [
    "results/final/cla3_results.csv",
    "results/final/fig_cla3_parity.png",
-   "data/circuit/cla3_spice_results.csv"
+   "data/circuit/cla3_spice_results.csv",
+   "data/circuit/cla3_spice_results_cin1.csv"
   ],
   "ok": true,
   "checks": [
@@ -325,11 +326,19 @@
    ],
    [
     true,
-    "12,800 CLA SPICE references valid, A+B correct"
+    "every input combination: 128 vectors (A, B, Cin) x 200 corners = 25,600 CLA SPICE references"
+   ],
+   [
+    true,
+    "all converged, A+B+Cin correct, every internal net at its logic level"
    ],
    [
     true,
     "metrics present"
+   ],
+   [
+    true,
+    "evaluation covers all 128 input combinations"
    ]
   ]
  },

@@ -37,6 +37,35 @@
  },
  "cla3": {
   "Part B/C corners (seed 4004)": {
+   "vectors": 128,
+   "n": 25600,
+   "spice_median_A": 1.9385211950385648e-07,
+   "ml_median_A": 1.934571762032874e-07,
+   "bias": -0.0009305581601051819,
+   "median_err": 0.0057468173054741195,
+   "p95_err": 0.018342929446239824,
+   "max_err": 0.043667094054233094,
+   "mean_accuracy_pct": 99.29113848548914,
+   "r2_log10": 0.9999218619737905
+  },
+  "independent new corners (seed 5005)": {
+   "vectors": 128,
+   "n": 25600,
+   "spice_median_A": 1.997451882414237e-07,
+   "ml_median_A": 2.0020669873339763e-07,
+   "bias": 0.0009858545929733878,
+   "median_err": 0.005760920872496593,
+   "p95_err": 0.02248866186815071,
+   "max_err": 0.05763614536640753,
+   "mean_accuracy_pct": 99.21954518995324,
+   "r2_log10": 0.9998777794484703
+  }
+ },
+ "cla3_by_cin": [
+  {
+   "corner_set": "Part B/C corners (seed 4004)",
+   "subset": "Cin = 0",
+   "vectors": 64,
    "n": 12800,
    "spice_median_A": 1.8922742970459345e-07,
    "ml_median_A": 1.8838536542028634e-07,
@@ -47,7 +76,24 @@
    "mean_accuracy_pct": 99.29760569442152,
    "r2_log10": 0.9999225247584511
   },
-  "independent new corners (seed 5005)": {
+  {
+   "corner_set": "Part B/C corners (seed 4004)",
+   "subset": "Cin = 1",
+   "vectors": 64,
+   "n": 12800,
+   "spice_median_A": 1.9945842528149956e-07,
+   "ml_median_A": 1.9876393165233857e-07,
+   "bias": -0.000775441994403708,
+   "median_err": 0.005783696492707881,
+   "p95_err": 0.01860833625912592,
+   "max_err": 0.043667094054233094,
+   "mean_accuracy_pct": 99.28467127655676,
+   "r2_log10": 0.9999211097006709
+  },
+  {
+   "corner_set": "independent new corners (seed 5005)",
+   "subset": "Cin = 0",
+   "vectors": 64,
    "n": 12800,
    "spice_median_A": 1.9499650275370517e-07,
    "ml_median_A": 1.9565785572803688e-07,
@@ -57,6 +103,32 @@
    "max_err": 0.05120637393162075,
    "mean_accuracy_pct": 99.23716208503552,
    "r2_log10": 0.9998821202323346
+  },
+  {
+   "corner_set": "independent new corners (seed 5005)",
+   "subset": "Cin = 1",
+   "vectors": 64,
+   "n": 12800,
+   "spice_median_A": 2.0345757734782081e-07,
+   "ml_median_A": 2.0415948914280673e-07,
+   "bias": 0.0011097474892696958,
+   "median_err": 0.005870567205884649,
+   "p95_err": 0.022335985776368618,
+   "max_err": 0.05763614536640753,
+   "mean_accuracy_pct": 99.20192829487094,
+   "r2_log10": 0.9998733228644441
+  }
+ ],
+ "cla3_composition": {
+  "Part B/C corners (seed 4004)": {
+   "median_err": 6.157752347122032e-05,
+   "p95_err": 0.00046130272289999526,
+   "max_err": 0.0012143911363235774
+  },
+  "independent new corners (seed 5005)": {
+   "median_err": 6.772207151776185e-05,
+   "p95_err": 0.0004895479944184381,
+   "max_err": 0.0012067970263219098
   }
  }
 }

@@ -60,7 +60,10 @@ def main() -> int:
     cfg_raw = CFG.raw
     meta_tr = json.loads((CFG.data / "transistor" / "metadata.json").read_text(encoding="utf-8"))
     meta_g = json.loads((CFG.data / "gates" / "metadata.json").read_text(encoding="utf-8"))
-    meta_c = json.loads((CFG.data / "circuit" / "metadata.json").read_text(encoding="utf-8"))
+    meta_c = [json.loads((CFG.data / "circuit" / f).read_text(encoding="utf-8"))
+              for f in ("metadata.json", "metadata_cin1.json") if (CFG.data / "circuit" / f).exists()]
+    cla_sims = sum(m["simulations"] for m in meta_c)
+    cla_failed = sum(m["failed"] for m in meta_c)
     summ = json.loads((R / "final" / "summary.json").read_text(encoding="utf-8"))
     env = (REP / "environment_check.txt").read_text(encoding="utf-8")
 
@@ -123,8 +126,22 @@ def main() -> int:
     cB, cN = summ["cla3"]["Part B/C corners (seed 4004)"], summ["cla3"]["independent new corners (seed 5005)"]
     trU = summ["transistor_mean"]["independent test (spec distribution)"]
     trT = summ["transistor_mean"]["independent test (near-rail / small |Vds|)"]
-    comp = pd.read_csv(R / "c" / "cla3_evaluation.csv")
-    comp_row = comp[comp.comparison.str.contains("Part B SPICE gate")].iloc[0]
+    comp_row = summ["cla3_composition"]["Part B/C corners (seed 4004)"]
+    comp_new = summ["cla3_composition"]["independent new corners (seed 5005)"]
+    n_vec = int(cN["vectors"])
+    by_cin = pd.DataFrame(summ["cla3_by_cin"])
+    levels = {"circuit": cN["mean_accuracy_pct"], "gate": gN["mean_accuracy_pct"],
+              "transistor": trU["mean_accuracy_pct"]}
+    met = [k for k, v in levels.items() if v >= 99.0]
+    missed = [k for k, v in levels.items() if v < 99.0]
+
+    def target_sentence():
+        if not met:
+            return "The 99 % mean-accuracy target is not met at any level."
+        if not missed:
+            return "The 99 % mean-accuracy target is met at every level."
+        return (f"The 99 % mean-accuracy target is therefore met at {' and '.join(met)} level but not at "
+                f"{' or '.join(missed)} level.")
     ba = pd.read_csv(R / "improve" / "final_corrected_refs" / "gate_circuit_before_after.csv")
     opu = pd.read_csv(R / "improve" / "op_uniqueness_summary.csv")
 
@@ -153,7 +170,7 @@ def main() -> int:
     fig_.tight_layout(); fig_.savefig(FIG / "fig7_gate_error_by_case.png", dpi=200); plt.close(fig_)
     cp = pd.read_csv(R / "final" / "cla3_predictions_partB.csv")
     fig_, axes = plt.subplots(1, 2, figsize=(12, 4.2))
-    for ax, (df, col, ttl) in zip(axes, ((gp, "e", "gates (18 cases)"), (cp, "e", "3-bit CLA (64 vectors)"))):
+    for ax, (df, col, ttl) in zip(axes, ((gp, "e", "gates (18 cases)"), (cp, "e", f"3-bit CLA ({cp.vector_id.nunique()} input combinations)"))):
         tb = pd.cut(df.temp, np.linspace(-40, 125, 12))
         q = df.groupby(tb, observed=True)[col].agg(med="median", p05=lambda e: e.quantile(0.05), p95=lambda e: e.quantile(0.95))
         x = [iv.mid for iv in q.index]
@@ -217,11 +234,11 @@ def main() -> int:
           "parameters. They are built from 64,000 single-transistor SPICE simulations (40,000 in the specification "
           "distribution plus 24,000 targeted near-rail samples; 49,600 used for fitting) and composed hierarchically "
           "into gate models (INV, NAND2, NOR2, AND2, OR2) and into a 36-gate, 192-transistor 3-bit carry-lookahead adder. "
-          f"On an independent evaluation set (200 new PVT corners) the hierarchical estimate of the full adder's leakage "
+          f"On an independent evaluation set (200 new PVT corners, all {n_vec} input combinations of A, B and Cin) the "
+          "hierarchical estimate of the full adder's leakage "
           f"has a median error of {P(cN['median_err'])}, a 95th-percentile error of {P(cN['p95_err'])} and a mean accuracy "
           f"of **{cN['mean_accuracy_pct']:.2f} %**; individual gates reach {gN['mean_accuracy_pct']:.2f} % and transistors "
-          f"(spec distribution) {trU['mean_accuracy_pct']:.2f} %. The 99 % mean-accuracy target is therefore met at circuit "
-          "level but not at gate or transistor level.", "",
+          f"(spec distribution) {trU['mean_accuracy_pct']:.2f} %. " + target_sentence(), "",
           "## 1. Introduction and objectives", "",
           "Static (leakage) power is a first-order design concern in nanometre CMOS, and it varies by orders of magnitude "
           "with temperature, supply voltage and manufacturing variation. Characterising it with SPICE at every corner and "
@@ -234,7 +251,7 @@ def main() -> int:
                            {"item": "Nominal VDD", "value": f"{CFG.vdd_nominal:g} V (sampled {CFG.vdd_range[0]:g}–{CFG.vdd_range[1]:g} V)"},
                            {"item": "Channel length", "value": f"L = {CFG.lmin * 1e9:.0f} nm"},
                            {"item": "Widths", "value": f"{CFG.w_range[0] * 1e9:.0f}–{CFG.w_range[1] * 1e9:.0f} nm (1–8 Lmin)"},
-                           {"item": "Test circuit", "value": "3-bit carry-lookahead adder (Cin = 0, 64 vectors)"}])), "",
+                           {"item": "Test circuit", "value": f"3-bit carry-lookahead adder (inputs A, B, Cin: all {n_vec} combinations)"}])), "",
           "## 3. Setup: SPICE simulator and environment", "",
           f"ngspice 44.2 (console build `ngspice_con.exe`), batch mode, driven from Python {py_ver} on "
           f"Windows 11 (numpy {env_ver('numpy')}, pandas {env_ver('pandas')}, scikit-learn {env_ver('sklearn')}, LightGBM "
@@ -333,6 +350,12 @@ def main() -> int:
           "Tellegen's theorem, KCL-consistent per device, and insensitive to ON-channel currents at Vds ≈ 0. Fed with SPICE's "
           "own transistor currents this code reproduces the SPICE leakage of all 3,600 cases. Inference runs with "
           "subprocess execution blocked (no hidden SPICE).", "",
+          "Node-voltage record (spec §5): `results/final/gate_predictions_partB.csv` and `..._newcorners.csv` list, for "
+          "every gate record, the SPICE leakage, the ML leakage, the SPICE-measured node voltages (`spice_node_out`, "
+          "`spice_node_x` / `spice_node_y`, `spice_node_n1`, as applicable) and the node voltages supplied to the "
+          "transistor models (`ml_input_node_*`). The ML-input voltages are the SPICE reference voltages used as model "
+          "inputs, as step 4 of the spec prescribes; they are not predicted by ML. They are read back from the actual "
+          "model inputs and checked to be identical to the SPICE values for every record.", "",
           "## 9. Gate results: gate-level accuracy", "",
           f"Final models, all 18 gate/input cases on the Part B corners (overall median {P(gB['median_err'])}, p95 "
           f"{P(gB['p95_err'])}, bias {SP(gB['bias'], 3)}, mean accuracy **{gB['mean_accuracy_pct']:.2f} %**, R²(log₁₀) "
@@ -346,11 +369,13 @@ def main() -> int:
           "Gi = Ai·Bi, Pi = Ai ⊕ Bi, C1 = G0 + P0·C0, C2 = G1 + P1·G0 + P1·P0·C0, C3 = G2 + P2·G1 + P2·P1·G0 + P2·P1·P0·C0 "
           "(carry-out), Si = Pi ⊕ Ci. Every carry is computed directly from G/P (verified: no carry depends on another), "
           "multi-input terms are trees of 2-input gates, XOR = AND2(OR2, NAND2) with NAND2(Ai, Bi) shared with Gi = INV(·). "
-          "36 gates (15 AND2, 12 OR2, 6 NAND2, 3 INV), 192 transistors, identical sizing/bodies/model cards. Cin is tied to "
-          "logic 0 (all six operand bits exercised → 64 vectors); the Boolean model is verified exhaustively for Cin = 0 and "
-          f"1. Full-circuit SPICE: {meta_c['simulations']:,} runs, {meta_c['failed']} failed; outputs equal A+B and all 36 "
-          "internal nets are at their logic levels in every run. Gate list: `data/circuit/cla3_gate_list.csv`; netlist: "
-          "`netlists/circuit/CLA3.cir`.", "",
+          "36 gates (15 AND2, 12 OR2, 6 NAND2, 3 INV), 192 transistors, identical sizing/bodies/model cards. All seven "
+          f"inputs (A2..A0, B2..B0, Cin) are driven at exactly 0 or VDD, so every input combination is 2⁷ = {n_vec} "
+          "vectors (vector_id = A + 8·B + 64·Cin); the Boolean model is verified exhaustively. The Cin = 0 half was "
+          "simulated first; the Cin = 1 half was added later with the same netlist generator, corners and options "
+          f"(separate `*_cin1` files). Full-circuit SPICE at the Part B corners: {cla_sims:,} runs, {cla_failed} failed; "
+          "outputs equal A+B+Cin and all 36 internal nets are at their logic levels in every run. Gate list: "
+          "`data/circuit/cla3_gate_list.csv`; netlist: `netlists/circuit/CLA3.cir`.", "",
           "ML estimate: a Boolean simulation gives each gate's inputs; each gate's leakage is the gate model of §8 for that "
           "gate type / input pattern / corner (gate-internal voltages looked up from the isolated-gate SPICE references, "
           "i.e. SPICE-derived); the circuit leakage is the sum over the 36 gates. No full-circuit SPICE quantity is used.", "",
@@ -360,11 +385,20 @@ def main() -> int:
                             "median err": P(v["median_err"]), "p95 err": P(v["p95_err"]),
                             "R² (log₁₀)": f"{v['r2_log10']:.5f}", "mean accuracy": f"{v['mean_accuracy_pct']:.2f} %"}
                            for k, v in summ["cla3"].items()])), "",
-          "Mean accuracy = 100 %·(1 − mean |e|), e = (I_ML − I_SPICE)/I_SPICE.", "", f"![CLA parity]({f_cla})", "",
+          f"Mean accuracy = 100 %·(1 − mean |e|), e = (I_ML − I_SPICE)/I_SPICE, over all {n_vec} input combinations × "
+          "200 corners. By carry-in:", "",
+          md(pd.DataFrame([{"corner set": r.corner_set, "subset": r.subset, "n": f"{r.n:,}",
+                            "bias": SP(r.bias, 3), "median err": P(r.median_err), "p95 err": P(r.p95_err),
+                            "mean accuracy": f"{r.mean_accuracy_pct:.2f} %"} for r in by_cin.itertuples()])), "",
+          f"![CLA parity]({f_cla})", "",
           f"Composition check (no ML): summing the isolated-gate SPICE leakages reproduces the full-circuit SPICE leakage "
-          f"with median error {P(comp_row.median_err, 4)} (p95 {P(comp_row.p95_err, 3)}). Loading between gates is "
-          "negligible at leakage-level currents, so the circuit error is the transistor-ML error; it is smaller than the "
-          "gate-level error because the 36 per-gate errors partly cancel.", "",
+          f"with median error {P(comp_row['median_err'], 4)} (p95 {P(comp_row['p95_err'], 3)}) at the Part B corners and "
+          f"{P(comp_new['median_err'], 4)} (p95 {P(comp_new['p95_err'], 3)}) at the new corners. Loading between gates is "
+          "negligible at leakage-level currents, so the circuit error is the transistor-ML error. "
+          + (f"It is smaller than the gate-level error (median {P(cN['median_err'])} vs {P(gN['median_err'])}) because "
+             "the 36 per-gate errors partly cancel."
+             if cN["median_err"] < gN["median_err"] else
+             f"Its median ({P(cN['median_err'])}) is not smaller than the gate-level median ({P(gN['median_err'])})."), "",
           "## 12. Detailed error analysis", "",
           "### 12.1 Transistor level", "",
           f"Ig and Ib are the easiest terminals (median {P(gib.min())}–{P(gib.max())}); Id/Is carry most error (median "
@@ -393,12 +427,14 @@ def main() -> int:
           "It is corrected in a separate file (original kept); the corrected value is the solution whose transistors "
           "match isolated single-transistor SPICE.", "",
           "### 12.4 Before → after the improvement phase", "",
-          "Independent data, corrected reference:", "",
+          "Independent data, corrected reference. This comparison was run before the Cin = 1 half existed, so its CLA "
+          f"rows cover the Cin = 0 half (64 vectors); the final CLA numbers in §11 cover all {n_vec} combinations.", "",
           md(pd.DataFrame([{"level": r.level, "data": r.dataset, "models": r.models, "median err": P(r.median_err),
                             "p95 err": P(r.p95_err), "mean accuracy": f"{r.mean_accuracy_pct:.2f} %"}
                            for r in ba.itertuples()])), "", f"![before after]({f_ba})", "",
           "## 13. Limitations and possible improvements", "",
-          "* 99 % mean accuracy is reached at circuit level only; gates are at ~98.9 %, transistors at ~98.6 %. Longer "
+          f"* Mean accuracy on independent data: circuit {cN['mean_accuracy_pct']:.2f} %, gates "
+          f"{gN['mean_accuracy_pct']:.2f} %, transistors {trU['mean_accuracy_pct']:.2f} %. " + target_sentence() + " Longer "
           "training (some fits still hit the iteration cap), larger seed ensembles and more near-rail data would likely "
           "help; each MLP fit costs 1–2 h of CPU on this machine.",
           "* Gate (and therefore circuit) prediction uses SPICE-recorded gate-internal node voltages, as the PDF allows; a "
@@ -415,12 +451,12 @@ def main() -> int:
           "## 14. Conclusion", "",
           f"A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level. Fitted on "
           f"49,600 single-transistor SPICE samples (of 64,000 simulated), it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with "
-          f"{P(cN['median_err'])} median error and {cN['mean_accuracy_pct']:.2f} % mean accuracy, and individual gates with "
+          f"{P(cN['median_err'])} median error and {cN['mean_accuracy_pct']:.2f} % mean accuracy over all {n_vec} input "
+          f"combinations, and individual gates with "
           f"{gN['mean_accuracy_pct']:.2f} %, with no SPICE run at prediction time (the gate-internal node voltages "
           "are taken from gate-level SPICE references, §8). The decisive factors were the "
           "signed-log target, power-based (Tellegen) gate accounting, fully converged network training, targeted data near "
-          "the rails, and SPICE reference integrity checks. The 99 % target is met at circuit level and narrowly missed at "
-          "gate and transistor level.", "",
+          "the rails, and SPICE reference integrity checks. " + target_sentence(), "",
           "## 15. References", "",
           "1. Course project specification, *ML-Driven PVT Variation Aware Leakage Estimation* (`DVD_ML_PROJECT.pdf`).",
           "2. Course slides, *Project-1: Leakage estimation* (annotated), Z. Abbas.",

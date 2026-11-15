@@ -91,3 +91,23 @@ def test_ml_composition_sums_gate_models():
     out = predict_circuit_ml(CLA, [0, 63], [0, 1, 2], fake)
     assert len(out) == 6 and np.allclose(out.i_leak_ml, 36e-9)
     assert len(calls) == len(set(calls))                      # each (kind, bits) evaluated once
+
+
+def test_all_128_input_combinations_include_cin():
+    """vector_id = A + 8*B + 64*Cin covers every input combination; 0..63 keep Cin = 0."""
+    seen = set()
+    for vid in range(128):
+        v = vector_bits(vid)
+        assert v["cin"] == vid // 64
+        assert circuit_sum(evaluate(CLA, v)) == adder_result(v)
+        seen.add(tuple(v[k] for k in ("a0", "a1", "a2", "b0", "b1", "b2", "cin")))
+    assert len(seen) == 128
+    with pytest.raises(ValueError):
+        vector_bits(128)
+
+
+def test_cin1_netlist_drives_cin_high():
+    c = sample_corners(CFG, n=1).iloc[0]
+    net = circuit_netlist(CFG, CLA, vector_bits(64 + 5), c).lower()
+    assert f"vcin cin 0 dc {float(c.vdd):.12g}" in net
+    assert circuit_netlist(CFG, CLA, vector_bits(5), c) != circuit_netlist(CFG, CLA, vector_bits(69), c)

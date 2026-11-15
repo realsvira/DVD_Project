@@ -7,10 +7,16 @@ Pure evaluation/presentation of data that was already evaluated in the improveme
                                                     abs. error, sign accuracy (independent test set,
                                                     data/final_eval/transistor_uniform, + targeted)
   results/final/fig_transistor_pred_vs_spice_<case>.png   (4 plots, deliverable 5)
+  results/final/gate_predictions_<set>.csv          every gate record: SPICE and ML leakage, the SPICE
+                                                    node voltages (spice_node_*) and the node voltages
+                                                    given to the transistor models (ml_input_node_*;
+                                                    the same SPICE values, read back from the model
+                                                    inputs -- not an independent ML prediction)
   results/final/gate_18cases_partB.csv/.md          deliverable 6 on the Part B corners (spec set)
   results/final/gate_18cases_newcorners.csv         same on the independent new corners
   results/final/fig_gate_parity.png                 deliverable 7 (both corner sets, log axes)
-  results/final/cla3_results.csv/.md                deliverable 8 (both corner sets)
+  results/final/cla3_results.csv/.md                deliverable 8 (both corner sets, all 128 input
+                                                    combinations A, B, Cin; plus Cin = 0 / 1 halves)
   results/final/fig_cla3_parity.png                 deliverable 8 parity (log axes)
   results/final/summary.json
 
@@ -68,13 +74,50 @@ def stats(e, spice, ml):
                               / np.sum((np.log10(spice) - np.mean(np.log10(spice))) ** 2))}
 
 
+NODES = ("out", "x", "y", "n1")
+
+
+def ml_input_nodes(dev: pd.DataFrame) -> pd.DataFrame:
+    """Voltage of every gate node as it was given to the transistor models (read back from the
+    per-transistor model inputs: drain/source voltages and the actual gate-node voltage)."""
+    parts = []
+    for term, col in (("d", "vd"), ("s", "vs"), ("g", "vg_node")):
+        t = dev[KEY + [f"node_{term}", col]].rename(columns={f"node_{term}": "node", col: "v"})
+        parts.append(t[t.node.isin(NODES)])
+    t = pd.concat(parts, ignore_index=True)
+    spread = t.groupby(KEY + ["node"]).v.agg(lambda v: v.max() - v.min())
+    assert float(spread.max()) == 0.0, "a node was given different voltages within one record"
+    w = t.groupby(KEY + ["node"]).v.first().unstack("node")
+    return w.rename(columns={n: f"ml_input_node_{n}" for n in w.columns}).reset_index()
+
+
 def gate_eval(pred, refs):
     cols = KEY + ["vdd", "temp"] + [c for c in refs.columns if c[:2] in ("n_", "p_")] + \
            [c for c in ("v_out", "v_x", "v_y", "v_n1") if c in refs]
-    g, _ = predict_gate_records(refs[cols], pred)
+    g, dev = predict_gate_records(refs[cols], pred)
     m = g.merge(refs[KEY + ["i_leak"]].rename(columns={"i_leak": "spice"}), on=KEY)
     m["e"] = (m.i_leak - m.spice) / m.spice
-    return m
+    spice_nodes = refs[KEY + [f"v_{n}" for n in NODES if f"v_{n}" in refs]].rename(
+        columns={f"v_{n}": f"spice_node_{n}" for n in NODES})
+    m = m.merge(spice_nodes, on=KEY).merge(ml_input_nodes(dev), on=KEY, how="left")
+    for n in NODES:                                   # ML inputs are the SPICE values (spec step 4)
+        if f"ml_input_node_{n}" in m:
+            both = m[f"ml_input_node_{n}"].notna()
+            assert np.array_equal(m.loc[both, f"ml_input_node_{n}"].to_numpy(),
+                                  m.loc[both, f"spice_node_{n}"].to_numpy()), n
+    pairs = [c for n in NODES for c in (f"spice_node_{n}", f"ml_input_node_{n}") if c in m]
+    return m[[c for c in m.columns if c not in pairs] + pairs]
+
+
+def load_cla_refs(cd: Path) -> pd.DataFrame:
+    """CLA3 SPICE references, all available input combinations (Cin = 0 file + Cin = 1 file)."""
+    parts = [pd.read_csv(cd / "cla3_spice_results.csv")]
+    if (cd / "cla3_spice_results_cin1.csv").exists():
+        parts.append(pd.read_csv(cd / "cla3_spice_results_cin1.csv"))
+    cla = pd.concat(parts, ignore_index=True)
+    assert not cla.duplicated(["vector_id", "corner_id"]).any()
+    assert (cla.status == "ok").all() and cla.sum_ok.all() and cla.all_nodes_logic_ok.all()
+    return cla
 
 
 def gate_table(m):
@@ -133,12 +176,22 @@ def main() -> int:
             refs = pd.read_csv(gf if gf.exists() else gd / "gate_spice_results.csv", dtype={"inputs": str})
             m = gate_eval(pred, refs)
             gres[label] = m
-            cla = pd.read_csv(cd / "cla3_spice_results.csv")
+            cla = load_cla_refs(cd)
+            vids = sorted(cla.vector_id.unique())
+            cids = sorted(cla.corner_id.unique())
             gm = GateLeakageModel(refs, pred)
-            ml = predict_circuit_ml(build_cla3(), range(64), sorted(cla.corner_id.unique()), gm.leakage)
-            cm = cla[["vector_id", "corner_id", "temp", "i_leak"]].rename(columns={"i_leak": "spice"}).merge(
-                ml, on=["vector_id", "corner_id"])
+            ml = predict_circuit_ml(build_cla3(), vids, cids, gm.leakage)
+            ref_i = refs.set_index(["gate", "inputs", "corner_id"]).i_leak
+
+            def spice_gate(kind, bits, corners):     # composition check: isolated-gate SPICE, no ML
+                return pd.Series([ref_i.loc[(kind, bits, c)] for c in corners], index=corners)
+            comp = predict_circuit_ml(build_cla3(), vids, cids, spice_gate).rename(
+                columns={"i_leak_ml": "i_leak_gatesum_spice"})
+            cm = cla[["vector_id", "cin", "corner_id", "temp", "i_leak"]].rename(columns={"i_leak": "spice"}).merge(
+                ml, on=["vector_id", "corner_id"]).merge(comp, on=["vector_id", "corner_id"])
+            assert len(cm) == len(cla)
             cm["e"] = (cm.i_leak_ml - cm.spice) / cm.spice
+            cm["e_composition"] = (cm.i_leak_gatesum_spice - cm.spice) / cm.spice
             cres[label] = cm
     finally:
         subprocess.run = real
@@ -158,14 +211,24 @@ def main() -> int:
         show[c] = show[c].map(lambda v: f"{v:.2%}")
     (OUT / "gate_18cases_partB.md").write_text(md(show), encoding="utf-8")
 
-    crow = []
+    crow, cin_rows = [], []
     for label, cm in cres.items():
-        crow.append({"corner_set": label, **stats(cm.e.to_numpy(), cm.spice.to_numpy(), cm.i_leak_ml.to_numpy())})
+        crow.append({"corner_set": label, "vectors": int(cm.vector_id.nunique()),
+                     **stats(cm.e.to_numpy(), cm.spice.to_numpy(), cm.i_leak_ml.to_numpy())})
+        for cin, d in cm.groupby("cin"):
+            cin_rows.append({"corner_set": label, "subset": f"Cin = {cin}", "vectors": int(d.vector_id.nunique()),
+                             **stats(d.e.to_numpy(), d.spice.to_numpy(), d.i_leak_ml.to_numpy())})
+        e = cm.e_composition.abs()
+        summary.setdefault("cla3_composition", {})[label] = {
+            "median_err": float(e.median()), "p95_err": float(e.quantile(0.95)), "max_err": float(e.max())}
+    summary["cla3_by_cin"] = cin_rows
     for label, m in gres.items():
         summary.setdefault("gate_overall", {})[label] = stats(m.e.to_numpy(), m.spice.to_numpy(), m.i_leak.to_numpy())
     ct = pd.DataFrame(crow)
     ct.to_csv(OUT / "cla3_results.csv", index=False)
-    (OUT / "cla3_results.md").write_text(md(ct), encoding="utf-8")
+    pd.DataFrame(cin_rows).to_csv(OUT / "cla3_results_by_cin.csv", index=False)
+    (OUT / "cla3_results.md").write_text(md(ct) + "\n\nBy carry-in:\n\n" + md(pd.DataFrame(cin_rows)),
+                                         encoding="utf-8")
     summary["cla3"] = {r["corner_set"]: {k: v for k, v in r.items() if k != "corner_set"} for r in crow}
 
     colors = dict(zip(ORDER, ["#1f77b4", "#d62728", "#2ca02c", "#9467bd", "#ff7f0e"]))
@@ -197,14 +260,17 @@ def main() -> int:
                      f"mean accuracy {s['mean_accuracy_pct']:.2f} %", fontsize=10)
         ax.set_xlabel("full-circuit SPICE leakage (A)"); ax.set_ylabel("hierarchical ML leakage (A)")
         fig.colorbar(sc, ax=ax, label="T (°C)")
-    fig.suptitle("3-bit carry-lookahead adder: 64 vectors × 200 corners", fontsize=12)
+    nv = sorted({int(cm.vector_id.nunique()) for cm in cres.values()})
+    fig.suptitle(f"3-bit carry-lookahead adder: {'/'.join(map(str, nv))} input combinations (A, B, Cin) "
+                 "× 200 corners", fontsize=12)
     fig.tight_layout(); fig.savefig(OUT / "fig_cla3_parity.png", dpi=200); plt.close(fig)
 
     tm = tr[tr.terminal == "mean"].groupby("test_set")[["med_rel", "p95_rel", "mean_rel"]].mean()
     summary["transistor_mean"] = {k: {"median_err": float(r.med_rel), "p95_err": float(r.p95_rel),
                                       "mean_accuracy_pct": float(100 * (1 - r.mean_rel))} for k, r in tm.iterrows()}
     (OUT / "summary.json").write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
-    print(json.dumps({k: summary[k] for k in ("transistor_mean", "gate_overall", "cla3")}, indent=1, default=str))
+    print(json.dumps({k: summary[k] for k in ("transistor_mean", "gate_overall", "cla3", "cla3_by_cin",
+                                              "cla3_composition")}, indent=1, default=str))
     return 0
 
 

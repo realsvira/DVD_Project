@@ -14,7 +14,7 @@ Digital VLSI Design course project. The specification is `DVD_ML_PROJECT.pdf`, w
 | Model file | **45nm HP**: PTM 45 nm high performance, metal gate / high-k (`models/45nm_HP.pm`) |
 | Nominal VDD | **1.0 V** (sampled 0.9–1.1 V) |
 | Channel length / widths | L = 45 nm; W = 45–360 nm |
-| Test circuit | **3-bit carry-lookahead adder** (Cin = 0, 64 vectors) |
+| Test circuit | **3-bit carry-lookahead adder** (inputs A, B, Cin: all 128 combinations) |
 | Simulator / language | ngspice 44.2 (`ngspice_con.exe`) / Python 3.13.14, Windows 11 |
 
 ## Final results (final models, independent evaluation data)
@@ -23,11 +23,11 @@ Digital VLSI Design course project. The specification is `DVD_ML_PROJECT.pdf`, w
 |---|---|---|---|
 | Transistor (fresh test, spec distribution, 4 cases × 4 terminals) | 0.61 % | 3.4 % | 98.56 % |
 | Gates (18 cases × 200 **new** PVT corners) | 0.78 % | 3.0 % | 98.93 % |
-| 3-bit CLA (64 vectors × 200 **new** PVT corners) | 0.57 % | 2.3 % | **99.24 %** |
+| 3-bit CLA (all 128 input combinations × 200 **new** PVT corners) | 0.58 % | 2.2 % | **99.22 %** |
 
 \*Mean accuracy = 100 % · (1 − mean |ML − SPICE| / SPICE).
 - **99 % target:** reached at circuit level; **not** reached at gate (98.9 %) or transistor (98.6 %) level.
-- **Official Part B/C corners:** gates 98.97 %, CLA 99.30 %.
+- **Official Part B/C corners:** gates 98.97 %, CLA 99.29 %.
 - **Full report:** [`reports/FINAL_REPORT.md`](reports/FINAL_REPORT.md), with a self-contained HTML copy at `reports/FINAL_REPORT.html` that can be printed to PDF from a browser.
 - **Requirement → file map:** [`reports/deliverables_checklist.md`](reports/deliverables_checklist.md).
 
@@ -38,7 +38,7 @@ Digital VLSI Design course project. The specification is `DVD_ML_PROJECT.pdf`, w
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 $env:NGSPICE = "C:\Spice64\bin\ngspice_con.exe"          # wherever ngspice_con.exe is
-.\.venv\Scripts\python.exe run_all.py --mode verify        # env check + 90 tests + deliverable audit (~1 min)
+.\.venv\Scripts\python.exe run_all.py --mode verify        # env check + 92 tests + deliverable audit (~1 min)
 .\.venv\Scripts\python.exe run_all.py --mode smoke         # small end-to-end run of every stage (~3 min)
 .\.venv\Scripts\python.exe run_all.py --list               # all stages; --mode full regenerates everything
 ```
@@ -70,7 +70,7 @@ config/project.toml        central configuration: assignment, ranges, seeds, pat
 src/leakage/               package: config, spice, simulator, transistor, dataset, ml, torch_mlp,
                            inference, gates, gate_ml, circuit
 scripts/                   one script per stage (see table above); run_all.py at the root runs them
-tests/                     pytest suite (90 tests)
+tests/                     pytest suite (92 tests)
 netlists/                  example netlists: transistor (4), gates (5), circuit (CLA3)
 data/                      datasets and SPICE references (transistor, aug, gates, circuit, final_eval)
 trained_models/            final models (*.joblib = v3) + v1/, v2/, v3/, final_before_improvement/
@@ -467,7 +467,8 @@ These results use the models of that stage (v2 in all four cases; the final v3 r
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q tests\test_circuit.py      # exhaustive Boolean tests (Cin = 0 and 1)
 .\.venv\Scripts\python.exe scripts\c1_cla_spice.py --smoke         # 128 full-circuit sims (~10 s)
-.\.venv\Scripts\python.exe scripts\c1_cla_spice.py                 # smoke + 64 x 200 = 12,800 sims (~16 min)
+.\.venv\Scripts\python.exe scripts\c1_cla_spice.py                 # Cin = 0 half: smoke + 64 x 200 = 12,800 sims (~16 min)
+.\.venv\Scripts\python.exe scripts\c1_cla_spice.py --cin 1         # Cin = 1 half: 12,800 sims into *_cin1 files (~16 min)
 .\.venv\Scripts\python.exe scripts\c2_cla_ml.py                    # hierarchical ML + evaluation (~30 s)
 ```
 **Circuit** (`src/leakage/circuit.py`, gate list in `data/circuit/cla3_gate_list.csv`, netlist in `netlists/circuit/CLA3.cir`):
@@ -475,7 +476,7 @@ These results use the models of that stage (v2 in all four cases; the final v3 r
 - **Lookahead:** no carry is computed from another carry (tested).
 - **XOR:** built as AND2(OR2, NAND2), with NAND2(Ai, Bi) shared with Gi = INV(·).
 - **Size:** 36 gates (15 AND2, 12 OR2, 6 NAND2, 3 INV) and 192 transistors. Widths, bodies, model cards and process draws are the same as Part B.
-- **Carry-in:** tied to logic 0, which gives 64 operand vectors. The Boolean model is verified for all 128 combinations (Cin = 0 and 1).
+- **Inputs:** A2..A0, B2..B0 and Cin, so every input combination is 128 vectors (`vector_id = A + 8·B + 64·Cin`). This stage originally simulated the Cin = 0 half (64 vectors, the numbers below); the Cin = 1 half was added in the final audit (`--cin 1`, separate `*_cin1` files), and the final results at the top cover all 128 combinations.
 
 **SPICE reference** (`data/circuit/cla3_spice_results.csv`): the complete 192-transistor netlist at the 200 Part B corners.
 - All 12,800 runs converged, and the outputs equal A+B in every one.
@@ -520,13 +521,13 @@ Full report: `reports/improvement_report.md`. The protocol (`results/improve/sel
 |---|---|---|---|
 | Transistor (spec distribution) | 2.77 % → 0.61 % | 12.0 % → 3.4 % | 95.5 % → 98.6 % |
 | Gates (18 × 200, new corners) | 3.80 % → 0.78 % | 13.7 % → 3.0 % | 95.1 % → 98.9 % |
-| **3-bit CLA (64 × 200, new corners)** | 2.98 % → 0.57 % | 10.1 % → 2.3 % | 96.3 % → **99.24 %** |
+| **3-bit CLA (Cin = 0 half, 64 × 200, new corners)** | 2.98 % → 0.57 % | 10.1 % → 2.3 % | 96.3 % → **99.24 %** |
 
 **99 % target:** reached at circuit level; **not** reached at gate level (98.9 %) or transistor level (98.6 %).
 
 **SPICE reference integrity:** one new-corner gate record had a spurious operating point.
 - ngspice's default solve converged to a non-physical internal body-node state, which `d5_op_uniqueness.py` detects using SPICE only.
-- It was corrected in a separate file. All other 7,199 gate and 25,600 CLA references are unique.
+- It was corrected in a separate file. All other 7,199 gate and all 51,200 CLA references (128 vectors × 200 corners × 2 corner sets) are unique.
 - The simulator also now retries isolated non-converging circuits with raised DC iteration limits; this was needed once.
 
 Final transistor models: `trained_models/<case>.joblib` (= `trained_models/v3/`). NMOS ON is an ensemble of two PyTorch MLPs; the other three are single PyTorch MLPs trained with the extra data.

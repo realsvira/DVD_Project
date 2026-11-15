@@ -131,8 +131,8 @@ def check_gates(d: Path, sim) -> dict:
                                       for r in m[m.flag].itertuples())}
 
 
-def check_cla(d: Path, gate_dir: Path, sim) -> dict:
-    ref = pd.read_csv(d / "cla3_spice_results.csv")
+def check_cla(d: Path, gate_dir: Path, sim, sfx: str = "") -> dict:
+    ref = pd.read_csv(d / f"cla3_spice_results{sfx}.csv")
     corners = pd.read_csv(gate_dir / "corners.csv")
     circ = C.build_cla3()
     orig = C.circuit_netlist
@@ -149,8 +149,8 @@ def check_cla(d: Path, gate_dir: Path, sim) -> dict:
     m["i_leak_alt"] = alt
     m["rel_diff"] = (m.i_leak - m.i_leak_alt).abs() / m.i_leak_alt.abs()
     m["flag"] = m.rel_diff > TOL
-    m.to_csv(d / "op_check.csv", index=False)
-    return {"set": str(d), "kind": "CLA3", "records": len(m), "flagged": int(m.flag.sum()),
+    m.to_csv(d / f"op_check{sfx}.csv", index=False)
+    return {"set": str(d) + sfx, "kind": "CLA3", "records": len(m), "flagged": int(m.flag.sum()),
             "max_rel_diff": float(m.rel_diff.max()),
             "flagged_list": "; ".join(f"v{int(r.vector_id)} c{int(r.corner_id)} ({r.i_leak:.3e} vs {r.i_leak_alt:.3e})"
                                       for r in m[m.flag].head(30).itertuples())}
@@ -159,7 +159,7 @@ def check_cla(d: Path, gate_dir: Path, sim) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--gates", nargs="*", default=[])
-    ap.add_argument("--cla", nargs="*", default=[], help="circuit_dir:gate_dir pairs")
+    ap.add_argument("--cla", nargs="*", default=[], help="circuit_dir:gate_dir[:suffix] (suffix _cin1 = Cin = 1 half)")
     ap.add_argument("--workers", type=int, default=CFG.ngspice_workers)
     a = ap.parse_args()
     sim = NgspiceSimulator.from_config(CFG, workers=a.workers, chunk=40)
@@ -171,9 +171,9 @@ def main() -> int:
               f"{r['max_rel_diff']:.2e} ({time.perf_counter() - t0:.0f}s)\n   {r['flagged_list']}", flush=True)
         rows.append(r)
     for pair in a.cla:
-        cd, gd = pair.split(":")
+        cd, gd, *sx = pair.split(":")
         t0 = time.perf_counter()
-        r = check_cla(Path(cd), Path(gd), sim)
+        r = check_cla(Path(cd), Path(gd), sim, sx[0] if sx else "")
         print(f"{cd}: {r['flagged']}/{r['records']} flagged, max rel diff {r['max_rel_diff']:.2e} "
               f"({time.perf_counter() - t0:.0f}s)\n   {r['flagged_list']}", flush=True)
         rows.append(r)

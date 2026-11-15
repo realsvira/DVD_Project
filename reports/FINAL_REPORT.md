@@ -1,10 +1,10 @@
 # ML-Driven PVT-Variation-Aware Leakage Estimation
 
-**Digital VLSI Design — course project report.** Team: Saumya Vira, Anish Toshniwal, Shrenil Patel, Het Selarka. Technology: PTM 45 nm HP (metal gate / high-k), VDD = 1 V; test circuit: 3-bit carry-lookahead adder. Report generated 2026-11-13 from the project's result files by `scripts/z3_build_report.py`.
+**Digital VLSI Design — course project report.** Team: Saumya Vira, Anish Toshniwal, Shrenil Patel, Het Selarka. Technology: PTM 45 nm HP (metal gate / high-k), VDD = 1 V; test circuit: 3-bit carry-lookahead adder. Report generated 2026-11-15 from the project's result files by `scripts/z3_build_report.py`.
 
 ## Abstract
 
-Leakage current of CMOS logic under process, voltage and temperature (PVT) variation is estimated with machine learning instead of full SPICE simulation. Four transistor-level models (NMOS/PMOS, ON/OFF) predict all four terminal currents (Id, Ig, Is, Ib) from VDD, temperature, width, terminal voltages and five BSIM4 process parameters. They are built from 64,000 single-transistor SPICE simulations (40,000 in the specification distribution plus 24,000 targeted near-rail samples; 49,600 used for fitting) and composed hierarchically into gate models (INV, NAND2, NOR2, AND2, OR2) and into a 36-gate, 192-transistor 3-bit carry-lookahead adder. On an independent evaluation set (200 new PVT corners) the hierarchical estimate of the full adder's leakage has a median error of 0.57 %, a 95th-percentile error of 2.26 % and a mean accuracy of **99.24 %**; individual gates reach 98.93 % and transistors (spec distribution) 98.56 %. The 99 % mean-accuracy target is therefore met at circuit level but not at gate or transistor level.
+Leakage current of CMOS logic under process, voltage and temperature (PVT) variation is estimated with machine learning instead of full SPICE simulation. Four transistor-level models (NMOS/PMOS, ON/OFF) predict all four terminal currents (Id, Ig, Is, Ib) from VDD, temperature, width, terminal voltages and five BSIM4 process parameters. They are built from 64,000 single-transistor SPICE simulations (40,000 in the specification distribution plus 24,000 targeted near-rail samples; 49,600 used for fitting) and composed hierarchically into gate models (INV, NAND2, NOR2, AND2, OR2) and into a 36-gate, 192-transistor 3-bit carry-lookahead adder. On an independent evaluation set (200 new PVT corners, all 128 input combinations of A, B and Cin) the hierarchical estimate of the full adder's leakage has a median error of 0.58 %, a 95th-percentile error of 2.25 % and a mean accuracy of **99.22 %**; individual gates reach 98.93 % and transistors (spec distribution) 98.56 %. The 99 % mean-accuracy target is therefore met at circuit level but not at gate or transistor level.
 
 ## 1. Introduction and objectives
 
@@ -18,7 +18,7 @@ Static (leakage) power is a first-order design concern in nanometre CMOS, and it
 | Nominal VDD | 1 V (sampled 0.9–1.1 V) |
 | Channel length | L = 45 nm |
 | Widths | 45–360 nm (1–8 Lmin) |
-| Test circuit | 3-bit carry-lookahead adder (Cin = 0, 64 vectors) |
+| Test circuit | 3-bit carry-lookahead adder (inputs A, B, Cin: all 128 combinations) |
 
 ## 3. Setup: SPICE simulator and environment
 
@@ -211,6 +211,8 @@ Static CMOS gates; AND2/OR2 = NAND2/NOR2 + inverter simulated as one netlist. Si
 
 ML gate prediction: each transistor's Vd, Vg, Vs, Vb come from its connections — inputs exactly 0/VDD, bodies on the rails, and **internal/output node voltages (out, x, y, n1) taken from the gate SPICE runs, as the PDF permits; the gate predictions therefore depend on SPICE node voltages**. The ON/OFF model is chosen by gate bias; the AND2/OR2 inverter gate (n1; median 4.6 µV, at most 0.32 mV from a rail) is snapped to the nearest rail. Leakage = Σ over transistors of (Vd−Vs)·Id + (Vg−Vs)·Ig + (Vb−Vs)·Ib, divided by VDD: identical to the SPICE definition by Tellegen's theorem, KCL-consistent per device, and insensitive to ON-channel currents at Vds ≈ 0. Fed with SPICE's own transistor currents this code reproduces the SPICE leakage of all 3,600 cases. Inference runs with subprocess execution blocked (no hidden SPICE).
 
+Node-voltage record (spec §5): `results/final/gate_predictions_partB.csv` and `..._newcorners.csv` list, for every gate record, the SPICE leakage, the ML leakage, the SPICE-measured node voltages (`spice_node_out`, `spice_node_x` / `spice_node_y`, `spice_node_n1`, as applicable) and the node voltages supplied to the transistor models (`ml_input_node_*`). The ML-input voltages are the SPICE reference voltages used as model inputs, as step 4 of the spec prescribes; they are not predicted by ML. They are read back from the actual model inputs and checked to be identical to the SPICE values for every record.
+
 ## 9. Gate results: gate-level accuracy
 
 Final models, all 18 gate/input cases on the Part B corners (overall median 0.75 %, p95 2.80 %, bias -0.072 %, mean accuracy **98.97 %**, R²(log₁₀) 0.99988):
@@ -244,7 +246,7 @@ Independent new corners: median 0.78 %, p95 3.01 %, mean accuracy **98.93 %**. O
 
 ## 10. Larger circuit implementation
 
-Gi = Ai·Bi, Pi = Ai ⊕ Bi, C1 = G0 + P0·C0, C2 = G1 + P1·G0 + P1·P0·C0, C3 = G2 + P2·G1 + P2·P1·G0 + P2·P1·P0·C0 (carry-out), Si = Pi ⊕ Ci. Every carry is computed directly from G/P (verified: no carry depends on another), multi-input terms are trees of 2-input gates, XOR = AND2(OR2, NAND2) with NAND2(Ai, Bi) shared with Gi = INV(·). 36 gates (15 AND2, 12 OR2, 6 NAND2, 3 INV), 192 transistors, identical sizing/bodies/model cards. Cin is tied to logic 0 (all six operand bits exercised → 64 vectors); the Boolean model is verified exhaustively for Cin = 0 and 1. Full-circuit SPICE: 12,800 runs, 0 failed; outputs equal A+B and all 36 internal nets are at their logic levels in every run. Gate list: `data/circuit/cla3_gate_list.csv`; netlist: `netlists/circuit/CLA3.cir`.
+Gi = Ai·Bi, Pi = Ai ⊕ Bi, C1 = G0 + P0·C0, C2 = G1 + P1·G0 + P1·P0·C0, C3 = G2 + P2·G1 + P2·P1·G0 + P2·P1·P0·C0 (carry-out), Si = Pi ⊕ Ci. Every carry is computed directly from G/P (verified: no carry depends on another), multi-input terms are trees of 2-input gates, XOR = AND2(OR2, NAND2) with NAND2(Ai, Bi) shared with Gi = INV(·). 36 gates (15 AND2, 12 OR2, 6 NAND2, 3 INV), 192 transistors, identical sizing/bodies/model cards. All seven inputs (A2..A0, B2..B0, Cin) are driven at exactly 0 or VDD, so every input combination is 2⁷ = 128 vectors (vector_id = A + 8·B + 64·Cin); the Boolean model is verified exhaustively. The Cin = 0 half was simulated first; the Cin = 1 half was added later with the same netlist generator, corners and options (separate `*_cin1` files). Full-circuit SPICE at the Part B corners: 25,600 runs, 0 failed; outputs equal A+B+Cin and all 36 internal nets are at their logic levels in every run. Gate list: `data/circuit/cla3_gate_list.csv`; netlist: `netlists/circuit/CLA3.cir`.
 
 ML estimate: a Boolean simulation gives each gate's inputs; each gate's leakage is the gate model of §8 for that gate type / input pattern / corner (gate-internal voltages looked up from the isolated-gate SPICE references, i.e. SPICE-derived); the circuit leakage is the sum over the 36 gates. No full-circuit SPICE quantity is used.
 
@@ -252,14 +254,21 @@ ML estimate: a Boolean simulation gives each gate's inputs; each gate's leakage 
 
 | corner set | n | SPICE median (A) | ML median (A) | bias | median err | p95 err | R² (log₁₀) | mean accuracy |
 |---|---|---|---|---|---|---|---|---|
-| Part B/C corners (seed 4004) | 12,800 | 1.892e-07 | 1.884e-07 | -0.106 % | 0.57 % | 1.81 % | 0.99992 | 99.30 % |
-| independent new corners (seed 5005) | 12,800 | 1.950e-07 | 1.957e-07 | +0.085 % | 0.57 % | 2.26 % | 0.99988 | 99.24 % |
+| Part B/C corners (seed 4004) | 25,600 | 1.939e-07 | 1.935e-07 | -0.093 % | 0.57 % | 1.83 % | 0.99992 | 99.29 % |
+| independent new corners (seed 5005) | 25,600 | 1.997e-07 | 2.002e-07 | +0.099 % | 0.58 % | 2.25 % | 0.99988 | 99.22 % |
 
-Mean accuracy = 100 %·(1 − mean |e|), e = (I_ML − I_SPICE)/I_SPICE.
+Mean accuracy = 100 %·(1 − mean |e|), e = (I_ML − I_SPICE)/I_SPICE, over all 128 input combinations × 200 corners. By carry-in:
+
+| corner set | subset | n | bias | median err | p95 err | mean accuracy |
+|---|---|---|---|---|---|---|
+| Part B/C corners (seed 4004) | Cin = 0 | 12,800 | -0.106 % | 0.57 % | 1.81 % | 99.30 % |
+| Part B/C corners (seed 4004) | Cin = 1 | 12,800 | -0.078 % | 0.58 % | 1.86 % | 99.28 % |
+| independent new corners (seed 5005) | Cin = 0 | 12,800 | +0.085 % | 0.57 % | 2.26 % | 99.24 % |
+| independent new corners (seed 5005) | Cin = 1 | 12,800 | +0.111 % | 0.59 % | 2.23 % | 99.20 % |
 
 ![CLA parity](figures/fig8_cla3_parity.png)
 
-Composition check (no ML): summing the isolated-gate SPICE leakages reproduces the full-circuit SPICE leakage with median error 0.0057 % (p95 0.043 %). Loading between gates is negligible at leakage-level currents, so the circuit error is the transistor-ML error; it is smaller than the gate-level error because the 36 per-gate errors partly cancel.
+Composition check (no ML): summing the isolated-gate SPICE leakages reproduces the full-circuit SPICE leakage with median error 0.0062 % (p95 0.046 %) at the Part B corners and 0.0068 % (p95 0.049 %) at the new corners. Loading between gates is negligible at leakage-level currents, so the circuit error is the transistor-ML error. It is smaller than the gate-level error (median 0.58 % vs 0.78 %) because the 36 per-gate errors partly cancel.
 
 ## 12. Detailed error analysis
 
@@ -291,12 +300,14 @@ One new-corner gate record (AND2 00, corner 83) had a spurious operating point: 
 | data/gates | gates | 3600 | 0 | 5.56e-06 |
 | data/final_eval/circuit | CLA3 | 12800 | 0 | 1.07e-05 |
 | data/circuit | CLA3 | 12800 | 0 | 9.15e-06 |
+| data/circuit_cin1 | CLA3 | 12800 | 0 | 1.36e-05 |
+| data/final_eval/circuit_cin1 | CLA3 | 12800 | 0 | 9.30e-06 |
 
 It is corrected in a separate file (original kept); the corrected value is the solution whose transistors match isolated single-transistor SPICE.
 
 ### 12.4 Before → after the improvement phase
 
-Independent data, corrected reference:
+Independent data, corrected reference. This comparison was run before the Cin = 1 half existed, so its CLA rows cover the Cin = 0 half (64 vectors); the final CLA numbers in §11 cover all 128 combinations.
 
 | level | data | models | median err | p95 err | mean accuracy |
 |---|---|---|---|---|---|
@@ -313,7 +324,7 @@ Independent data, corrected reference:
 
 ## 13. Limitations and possible improvements
 
-* 99 % mean accuracy is reached at circuit level only; gates are at ~98.9 %, transistors at ~98.6 %. Longer training (some fits still hit the iteration cap), larger seed ensembles and more near-rail data would likely help; each MLP fit costs 1–2 h of CPU on this machine.
+* Mean accuracy on independent data: circuit 99.22 %, gates 98.93 %, transistors 98.56 %. The 99 % mean-accuracy target is therefore met at circuit level but not at gate or transistor level. Longer training (some fits still hit the iteration cap), larger seed ensembles and more near-rail data would likely help; each MLP fit costs 1–2 h of CPU on this machine.
 * Gate (and therefore circuit) prediction uses SPICE-recorded gate-internal node voltages, as the PDF allows; a fully SPICE-free flow would need a node-voltage model (e.g. solving KCL at internal nodes with the transistor models).
 * Specification-inherited model assumptions: only toxe varies (BSIM4 keeps toxp nominal); no junction area/perimeter (body leakage ~1e-14 A, not ∝ W); widths of the gates are an assumption (equal-drive sizing).
 * Relative error is ill-defined for currents crossing zero; tail statistics on near-rail data should be read with that in mind.
@@ -322,7 +333,7 @@ Independent data, corrected reference:
 
 ## 14. Conclusion
 
-A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level. Fitted on 49,600 single-transistor SPICE samples (of 64,000 simulated), it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with 0.57 % median error and 99.24 % mean accuracy, and individual gates with 98.93 %, with no SPICE run at prediction time (the gate-internal node voltages are taken from gate-level SPICE references, §8). The decisive factors were the signed-log target, power-based (Tellegen) gate accounting, fully converged network training, targeted data near the rails, and SPICE reference integrity checks. The 99 % target is met at circuit level and narrowly missed at gate and transistor level.
+A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level. Fitted on 49,600 single-transistor SPICE samples (of 64,000 simulated), it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with 0.58 % median error and 99.22 % mean accuracy over all 128 input combinations, and individual gates with 98.93 %, with no SPICE run at prediction time (the gate-internal node voltages are taken from gate-level SPICE references, §8). The decisive factors were the signed-log target, power-based (Tellegen) gate accounting, fully converged network training, targeted data near the rails, and SPICE reference integrity checks. The 99 % mean-accuracy target is therefore met at circuit level but not at gate or transistor level.
 
 ## 15. References
 

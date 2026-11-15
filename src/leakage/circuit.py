@@ -11,10 +11,9 @@ Every carry is computed directly from G/P/C0 (lookahead, no ripple); multi-input
 terms are trees of 2-input gates. XOR(x, y) = AND2(OR2(x, y), NAND2(x, y)); for the
 operand XOR the NAND2(Ai, Bi) is shared with Gi = INV(NAND2(Ai, Bi)).
 
-Carry-in assumption: the spec asks for all six operand bits (A2..A0, B2..B0) to be
-exercised; Cin is tied to logic 0 (driven by a 0 V source, i.e. exactly 0 like every gate
-input), giving 64 input vectors. The Boolean model supports Cin = 1 too and is verified
-for all 128 combinations.
+Inputs: A2..A0, B2..B0 and Cin, all driven by sources at exactly 0 or VDD, so every input
+combination is 2^7 = 128 vectors: vector_id = A + 8*B + 64*Cin (0..63 have Cin = 0,
+64..127 have Cin = 1). The Boolean model is verified for all 128 combinations.
 
 Transistor level: each gate instance is the Part B topology with identical widths, bodies
 (NMOS->0, PMOS->vdd), model cards and the corner's shared NMOS / PMOS process draws.
@@ -52,8 +51,8 @@ class GateInst:
 @dataclass(frozen=True)
 class Circuit:
     name: str
-    primary_inputs: tuple[str, ...]   # driven by sources (operands)
-    constants: dict                   # net -> logic value (tied inputs)
+    primary_inputs: tuple[str, ...]   # driven by sources (operands and carry-in)
+    constants: dict                   # net -> logic value (tied inputs; none for CLA3)
     outputs: tuple[str, ...]
     gates: tuple[GateInst, ...]
 
@@ -100,14 +99,21 @@ def build_cla3() -> Circuit:
     # Si = Pi xor Ci  (C0 = cin)
     for i, c in enumerate(("cin", "c1", "c2")):
         g += _xor(f"sx{i}", f"p{i}", c, f"s{i}")
-    return Circuit("CLA3", ("a0", "a1", "a2", "b0", "b1", "b2"), {"cin": 0},
+    return Circuit("CLA3", ("a0", "a1", "a2", "b0", "b1", "b2", "cin"), {},
                    ("s0", "s1", "s2", "c3"), tuple(g))
 
 
 # ===================================================================== logic
-def vector_bits(vector_id: int, cin: int = 0) -> dict[str, int]:
-    """vector_id = A + 8*B (A, B in 0..7); bit 0 = LSB."""
-    a, b = vector_id % 8, vector_id // 8
+N_VECTORS = 128                      # A (3 bits) x B (3 bits) x Cin
+
+
+def vector_bits(vector_id: int, cin: int | None = None) -> dict[str, int]:
+    """vector_id = A + 8*B + 64*Cin (A, B in 0..7, Cin in 0..1); bit 0 = LSB.
+    An explicit `cin` overrides the carry-in bit of vector_id."""
+    if not 0 <= vector_id < N_VECTORS:
+        raise ValueError(f"vector_id {vector_id} outside 0..{N_VECTORS - 1}")
+    a, b = vector_id % 8, (vector_id // 8) % 8
+    cin = vector_id // 64 if cin is None else int(cin)
     return {**{f"a{i}": (a >> i) & 1 for i in range(3)}, **{f"b{i}": (b >> i) & 1 for i in range(3)},
             "cin": cin}
 

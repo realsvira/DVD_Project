@@ -70,7 +70,7 @@ At the end you should see a table where every stage says **ok**:
 | audit | ok |
 ```
 - **env:** Python, the libraries, ngspice and the transistor model file were all found.
-- **tests:** all 90 automatic tests passed.
+- **tests:** all 92 automatic tests passed.
 - **audit:** all 12 project deliverables are present and correct.
 
 ## Step 6: Run a quick demonstration (about 3 minutes)

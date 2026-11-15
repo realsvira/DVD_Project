@@ -159,15 +159,22 @@ def main() -> int:
 
     # ---------------------------------------------------------------- 8 test circuit
     c = ROOT / "results/final/cla3_results.csv"
-    s = pd.read_csv(ROOT / "data/circuit/cla3_spice_results.csv")
+    halves = [ROOT / "data/circuit/cla3_spice_results.csv", ROOT / "data/circuit/cla3_spice_results_cin1.csv"]
+    s = pd.concat([pd.read_csv(f) for f in halves if f.is_file()], ignore_index=True)
+    combos = s[["vector_id", "corner_id"]].drop_duplicates()
     ch = [(c.is_file(), "evaluation table present"), (png_ok("results/final/fig_cla3_parity.png"), "parity plot valid PNG"),
-          (len(s) == 12800 and (s.status == "ok").all() and s.sum_ok.all(), "12,800 CLA SPICE references valid, A+B correct")]
+          (len(s) == 25600 and len(combos) == 25600 and s.vector_id.nunique() == 128 and set(s.cin) == {0, 1},
+           "every input combination: 128 vectors (A, B, Cin) x 200 corners = 25,600 CLA SPICE references"),
+          ((s.status == "ok").all() and s.sum_ok.all() and s.all_nodes_logic_ok.all(),
+           "all converged, A+B+Cin correct, every internal net at its logic level")]
     if c.is_file():
         cc = pd.read_csv(c)
         ch.append(({"bias", "median_err", "p95_err", "spice_median_A", "ml_median_A"} <= set(cc.columns), "metrics present"))
+        ch.append(((cc.get("vectors") == 128).all(), "evaluation covers all 128 input combinations"))
     item("8. Test-circuit results (same metrics) + parity plot", ["results/final/cla3_results.csv",
                                                                  "results/final/fig_cla3_parity.png",
-                                                                 "data/circuit/cla3_spice_results.csv"], ch)
+                                                                 "data/circuit/cla3_spice_results.csv",
+                                                                 "data/circuit/cla3_spice_results_cin1.csv"], ch)
 
     # ---------------------------------------------------------------- 9 code
     scripts = ["run_all.py", "config/project.toml", "src/leakage/simulator.py", "src/leakage/transistor.py",

@@ -14,3 +14,18 @@ SMOKE TEST PASSED (nominal corner leakage 1.066e-07 .. 1.307e-07 A)
 == full: 64 vectors (Cin = 1) x 200 corners = 12800 full-circuit simulations ==
   [full] chunk 40/400  121s
   [full] chunk 80/400  248s
+  [full] chunk 120/400  387s
+  [full] chunk 160/400  502s
+  [full] chunk 200/400  612s
+  [full] chunk 240/400  715s
+  [full] chunk 280/400  821s
+  [full] chunk 320/400  938s
+  [full] chunk 360/400  1046s
+  [full] chunk 400/400  1142s
+  [full] 12800 sims in 1172s
+  [PASS] 12800 simulations == 12800
+  [PASS] converged 12800/12800
+  [PASS] A+B correct at the outputs 12800/12800
+  [PASS] all 36 internal nets within 5% VDD of their logic level 12800/12800 (max dev 3.10e-04 VDD)
+  [PASS] leakage positive and finite
+EXIT=0
