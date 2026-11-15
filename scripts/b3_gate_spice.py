@@ -17,8 +17,8 @@ Outputs
   netlists/gates/<GATE>.cir              one example netlist per gate (corner 0)
   results/b3/truth_table.csv / summary_by_case.csv / b3_report.md
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\b3_gate_spice.py --smoke
-      .\\.venv\\Scripts\\python.exe scripts\\b3_gate_spice.py
+Run:  .venv/bin/python scripts/b3_gate_spice.py --smoke
+      .venv/bin/python scripts/b3_gate_spice.py
 """
 from __future__ import annotations
 

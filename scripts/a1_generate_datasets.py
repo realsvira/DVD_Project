@@ -19,10 +19,10 @@ Outputs (in the output folder)
   _shards/<case>/     intermediate per-batch results (used for resume)
 
 Examples (PowerShell, from the project root)
-  .\\.venv\\Scripts\\python.exe scripts\\a1_generate_datasets.py --smoke
-  .\\.venv\\Scripts\\python.exe scripts\\a1_generate_datasets.py --small
-  .\\.venv\\Scripts\\python.exe scripts\\a1_generate_datasets.py
-  .\\.venv\\Scripts\\python.exe scripts\\a1_generate_datasets.py --cases nmos_off --n 2000 --out data\\tmp
+  .venv/bin/python scripts/a1_generate_datasets.py --smoke
+  .venv/bin/python scripts/a1_generate_datasets.py --small
+  .venv/bin/python scripts/a1_generate_datasets.py
+  .venv/bin/python scripts/a1_generate_datasets.py --cases nmos_off --n 2000 --out data/tmp
 """
 from __future__ import annotations
 

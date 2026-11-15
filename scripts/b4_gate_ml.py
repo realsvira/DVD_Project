@@ -21,7 +21,7 @@ Outputs
   results/b4/dominant_error_devices.csv, fig_gate_parity.png, fig_gate_parity_by_gate.png,
   fig_gate_error_by_case.png, b4_report.md (copied to reports/)
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\b4_gate_ml.py
+Run:  .venv/bin/python scripts/b4_gate_ml.py
 """
 from __future__ import annotations
 

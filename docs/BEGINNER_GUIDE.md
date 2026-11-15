@@ -1,67 +1,67 @@
-# Beginner guide: running this project from zero
+# Beginner guide: running this project from zero (Linux)
 
-This guide assumes you have a Windows 10/11 PC and have never used Python, Git or SPICE. Follow the steps in order. Every command is typed into **PowerShell**: press the Windows key, type `PowerShell`, press Enter. Paste a command with right-click, then press Enter.
+This guide assumes a Linux PC (Fedora, Ubuntu/Debian or Arch) and no experience with Python, Git or SPICE. Follow the steps in order. Every command is typed into a **terminal**: open it from your applications menu (search for "Terminal"; on Ubuntu, Ctrl+Alt+T also works). To paste a command, use Ctrl+Shift+V, then press Enter.
+
+Commands starting with `sudo` install software for the whole system and ask for your password. Nothing is shown while you type it; this is normal.
 
 ---
 
-## Step 1: Install Python
+## Step 1: Install Python, Git and ngspice (the circuit simulator)
 
-1. Go to **python.org → Downloads → Windows** and download **Python 3.13** (any 3.11 or newer works).
-2. Run the installer. **Tick "Add python.exe to PATH"** at the bottom of the first screen, then click *Install Now*.
-3. Close PowerShell, open it again and check:
-   ```powershell
-   python --version
-   ```
-   You should see something like `Python 3.13.x`.
+Run the line for your distribution:
 
-## Step 2: Install Git and download the project
+| Distribution | Command |
+|---|---|
+| Fedora | `sudo dnf install python3 git ngspice` |
+| Ubuntu / Debian | `sudo apt update && sudo apt install python3 python3-venv git ngspice` |
+| Arch | `sudo pacman -S python git ngspice` |
 
-1. Go to **git-scm.com → Download for Windows**, install with all default options, and reopen PowerShell.
-2. Download the project into your user folder:
-   ```powershell
-   cd $HOME
-   ```
-   ```powershell
-   git clone https://github.com/realsvira/DVD_Project.git
-   ```
-   ```powershell
-   cd DVD_Project
-   ```
-   *(If you were given a ZIP file instead, right-click it → Extract All, then use `cd` to go into the extracted `DVD_Project` folder.)*
-
-From now on, **always run commands inside the `DVD_Project` folder**. If you open a new PowerShell window, first run `cd $HOME\DVD_Project`.
-
-## Step 3: Install ngspice (the circuit simulator)
-
-1. Go to **ngspice.sourceforge.io → Download** and get the **MS Windows 64-bit** archive (version 44.2 was used).
-2. Extract it so that this file exists: `C:\Spice64\bin\ngspice_con.exe`. If the archive is `.7z`, use 7-Zip to extract it.
-3. Tell the project where ngspice is. This is permanent; reopen PowerShell afterwards:
-   ```powershell
-   [Environment]::SetEnvironmentVariable("NGSPICE", "C:\Spice64\bin\ngspice_con.exe", "User")
-   ```
-4. Check it:
-   ```powershell
-   & $env:NGSPICE -v
-   ```
-   It should print `ngspice-44.2` (or similar).
-
-## Step 4: Create the Python environment (one time, about 5 minutes)
-
-```powershell
-python -m venv .venv
+Then check the versions:
+```bash
+python3 --version
 ```
-```powershell
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
+You need `Python 3.11` or newer.
+```bash
+ngspice -v
 ```
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+You should see `ngspice-44.2` or newer. Version 45.2 was used to verify this guide.
+
+*(If Python is older than 3.11, as on Ubuntu 22.04, install a newer Python first. One easy way is `curl -LsSf https://astral.sh/uv/install.sh | sh` and then `uv python install 3.13`. In the later steps, use `uv venv --python 3.13 .venv` instead of `python3 -m venv .venv`.)*
+
+## Step 2: Download the project
+
+```bash
+cd ~
 ```
-This downloads the libraries the project uses (numpy, pandas, scikit-learn, matplotlib and so on) into the `.venv` folder, so nothing else on your PC is affected.
+```bash
+git clone https://github.com/realsvira/DVD_Project.git
+```
+```bash
+cd DVD_Project
+```
+*(If you were given a ZIP file instead, extract it with `unzip DVD_Project.zip`, then use `cd` to go into the extracted `DVD_Project` folder.)*
 
-## Step 5: Check that everything works (about 1 minute)
+From now on, **always run commands inside the `DVD_Project` folder**. If you open a new terminal, first run `cd ~/DVD_Project`.
 
-```powershell
-.\.venv\Scripts\python.exe run_all.py --mode verify
+## Step 3: Create the Python environment (one time, about 5 minutes)
+
+```bash
+python3 -m venv .venv
+```
+```bash
+.venv/bin/python -m pip install --upgrade pip
+```
+```bash
+.venv/bin/python -m pip install -r requirements.txt
+```
+This downloads the libraries the project uses (numpy, pandas, scikit-learn, LightGBM, matplotlib and so on) into the `.venv` folder, so nothing else on your PC is affected.
+
+*Optional:* run `source .venv/bin/activate` to type `python` instead of `.venv/bin/python` in that terminal. This guide always uses the full form, so you don't need it.
+
+## Step 4: Check that everything works (about 1 minute)
+
+```bash
+.venv/bin/python run_all.py --mode verify
 ```
 At the end you should see a table where every stage says **ok**:
 ```
@@ -73,10 +73,10 @@ At the end you should see a table where every stage says **ok**:
 - **tests:** all 92 automatic tests passed.
 - **audit:** all 12 project deliverables are present and correct.
 
-## Step 6: Run a quick demonstration (about 3 minutes)
+## Step 5: Run a quick demonstration (a few minutes)
 
-```powershell
-.\.venv\Scripts\python.exe run_all.py --mode smoke
+```bash
+.venv/bin/python run_all.py --mode smoke
 ```
 This runs a small version of every stage:
 - simulates transistors, gates and the 3-bit adder in ngspice;
@@ -85,11 +85,11 @@ This runs a small version of every stage:
 
 Every stage should say **ok**.
 
-## Step 7: Try the trained model yourself
+## Step 6: Try the trained model yourself
 
 Predict the four currents of one transistor and compare with a real SPICE simulation:
-```powershell
-.\.venv\Scripts\python.exe scripts\a2_predict.py --device nmos --vd 1.0 --vg 0 --vs 0 --vb 0 --vdd 1.0 --temp 27 --w 90e-9 --spice
+```bash
+.venv/bin/python scripts/a2_predict.py --device nmos --vd 1.0 --vg 0 --vs 0 --vb 0 --vdd 1.0 --temp 27 --w 90e-9 --spice
 ```
 Change the numbers to try other conditions:
 
@@ -105,35 +105,36 @@ Rules:
 - The gate must be exactly 0 or VDD.
 - The NMOS body must be 0, and the PMOS body must equal VDD.
 
-## Step 8: Look at the results
+## Step 7: Look at the results
 
 | What | Where |
 |---|---|
-| **Final report** (read this first) | `reports\FINAL_REPORT.html`: double-click to open it in a browser. To get a PDF, press Ctrl+P and choose "Save as PDF". |
-| Which file answers which project requirement | `reports\deliverables_checklist.md` |
-| Final plots and tables | `results\final\` |
-| Datasets | `data\transistor\` |
-| SPICE netlists | `netlists\` |
-| Trained models | `trained_models\` |
+| **Final report** (read this first) | `reports/FINAL_REPORT.pdf`, or `reports/FINAL_REPORT.html` in a browser |
+| Which file answers which project requirement | `reports/deliverables_checklist.md` |
+| Final plots and tables | `results/final/` |
+| Datasets | `data/transistor/` |
+| SPICE netlists | `netlists/` |
+| Trained models | `trained_models/` |
 
-To open a folder in File Explorer from PowerShell, use for example `explorer results\final`.
+To open a file or folder from the terminal, use `xdg-open`, for example `xdg-open reports/FINAL_REPORT.html` or `xdg-open results/final`.
 
-## Step 9 (optional, advanced): regenerate everything from scratch
+## Step 8 (optional, advanced): regenerate everything from scratch
 
-```powershell
-.\.venv\Scripts\python.exe run_all.py --list
+```bash
+.venv/bin/python run_all.py --list
 ```
 That shows every stage.
-```powershell
-.\.venv\Scripts\python.exe run_all.py --mode full
+```bash
+.venv/bin/python run_all.py --mode full
 ```
 - **Warning:** this takes many hours. Training the neural networks alone is roughly 15 hours on a 12-core PC.
-- Re-training the final models also needs PyTorch:
-  ```powershell
-  .\.venv\Scripts\python.exe -m pip install -r requirements-train.txt
+- Re-training the final models also needs PyTorch (CPU build):
+  ```bash
+  .venv/bin/python -m pip install -r requirements-train.txt
   ```
 - If it stops, continue with `--from <stage name>`.
 - Results that were already evaluated once are protected and will be reported as "skipped".
+- To keep it running after you close the terminal, start it with `nohup .venv/bin/python run_all.py --mode full &`.
 
 ---
 
@@ -141,11 +142,12 @@ That shows every stage.
 
 | Message | What to do |
 |---|---|
-| `python` is not recognized | Python was installed without "Add to PATH". Reinstall Python and tick that box. |
-| `ngspice not found` / `ENVIRONMENT NOT READY` | Redo Step 3; make sure `C:\Spice64\bin\ngspice_con.exe` exists and reopen PowerShell. |
-| `[FAIL] Model file SHA-256 matches config` | Your copy is an old download. Delete the `DVD_Project` folder and do Step 2 again. |
-| `No module named ...` | You used plain `python` instead of `.\.venv\Scripts\python.exe`, or Step 4 did not finish; run Step 4 again. |
-| `cannot be loaded because running scripts is disabled` | Only happens if you try `Activate.ps1`. You don't need it: use `.\.venv\Scripts\python.exe` as shown. |
-| A stage says FAILED | Open the log file it names (in `results\run_logs\`) and read the last lines. |
+| `python3: command not found` | Redo Step 1. |
+| `ensurepip is not available` when creating `.venv` | Ubuntu/Debian: `sudo apt install python3-venv`, then `rm -rf .venv` and redo Step 3. |
+| `ngspice: command not found` / `ENVIRONMENT NOT READY` | Redo Step 1. If ngspice is installed somewhere unusual, run `export NGSPICE=/full/path/to/ngspice` first. |
+| `[FAIL] Model file SHA-256 matches config` | Your copy's line endings were changed. Delete the `DVD_Project` folder and redo Step 2. |
+| `No module named ...` | You used `python3` instead of `.venv/bin/python`, or Step 3 did not finish; run Step 3 again. |
+| `Permission denied` | You are outside your home folder. Run `cd ~/DVD_Project`. Never use `sudo` for the project's own commands. |
+| A stage says FAILED | Open the log file it names (in `results/run_logs/`) and read the last lines. |
 
-More detail: `docs\INSTALL_WINDOWS.md` and `README.md`.
+More detail: the *Installation (Linux)* section of `README.md`.

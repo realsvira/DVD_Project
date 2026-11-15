@@ -22,8 +22,8 @@ Outputs (never overwrite the originals):
   <set>/gate_spice_results_corrected.csv | cla3_spice_results_corrected.csv
   results/improve/op_uniqueness_summary.csv
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\d5_op_uniqueness.py --gates data\\gates data\\final_eval\\gates
-      .\\.venv\\Scripts\\python.exe scripts\\d5_op_uniqueness.py --cla data\\circuit:data\\gates data\\final_eval\\circuit:data\\final_eval\\gates
+Run:  .venv/bin/python scripts/d5_op_uniqueness.py --gates data/gates data/final_eval/gates
+      .venv/bin/python scripts/d5_op_uniqueness.py --cla data/circuit:data/gates data/final_eval/circuit:data/final_eval/gates
 """
 from __future__ import annotations
 

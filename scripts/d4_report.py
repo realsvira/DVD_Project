@@ -4,7 +4,7 @@ Reads results/improve/{diagnostics/*, experiments_validation.csv, selection.json
 and writes reports/improvement_report.md and results/improve/fig_validation_experiments.png.
 All numbers come from those files; the 99 % target statements are computed, not typed.
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\d4_report.py
+Run:  .venv/bin/python scripts/d4_report.py
 """
 from __future__ import annotations
 

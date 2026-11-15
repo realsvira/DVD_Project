@@ -2,8 +2,8 @@
 optionally comparing against a fresh ngspice simulation.
 
 Examples (PowerShell, project root):
-  .\\.venv\\Scripts\\python.exe scripts\\a2_predict.py --device nmos --vd 1.0 --vg 0 --vs 0 --vb 0 --vdd 1.0 --temp 27 --w 90e-9
-  .\\.venv\\Scripts\\python.exe scripts\\a2_predict.py --device pmos --vd 0 --vg 1.05 --vs 1.05 --vb 1.05 --vdd 1.05 --temp 85 --w 135e-9 --vth0 -0.47 --spice
+  .venv/bin/python scripts/a2_predict.py --device nmos --vd 1.0 --vg 0 --vs 0 --vb 0 --vdd 1.0 --temp 27 --w 90e-9
+  .venv/bin/python scripts/a2_predict.py --device pmos --vd 0 --vg 1.05 --vs 1.05 --vb 1.05 --vdd 1.05 --temp 85 --w 135e-9 --vth0 -0.47 --spice
 """
 from __future__ import annotations
 

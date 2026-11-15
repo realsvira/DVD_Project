@@ -22,7 +22,7 @@ Metrics, e = (I_ML - I_SPICE) / I_SPICE over 64 vectors x 200 corners:
 Outputs: data/circuit/cla3_ml_predictions.csv, results/c/cla3_evaluation.csv/.md,
 results/c/fig_cla3_parity.png, results/c/fig_cla3_error_by_vector.png, reports/c_cla3_report.md
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\c2_cla_ml.py
+Run:  .venv/bin/python scripts/c2_cla_ml.py
 """
 from __future__ import annotations
 

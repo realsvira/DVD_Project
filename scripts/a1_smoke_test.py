@@ -14,7 +14,7 @@ plus a corner sweep over the edges of the sampling ranges.
 
 Outputs: results/a1_smoke_test.csv, results/a1_corner_sweep.csv,
          reports/a1_smoke_test.md, netlists/transistor/*.cir
-Run:     .\\.venv\\Scripts\\python.exe scripts\\a1_smoke_test.py
+Run:     .venv/bin/python scripts/a1_smoke_test.py
 """
 from __future__ import annotations
 

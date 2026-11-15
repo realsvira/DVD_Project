@@ -17,8 +17,8 @@ into any model, scaler, transform choice or selection step):
 Test-set evaluation is a separate, one-time step: scripts/a2_evaluate_test.py.
 
 Run:
-  .\\.venv\\Scripts\\python.exe scripts\\a2_train_models.py            (full)
-  .\\.venv\\Scripts\\python.exe scripts\\a2_train_models.py --quick    (tiny grid, fast code check;
+  .venv/bin/python scripts/a2_train_models.py            (full)
+  .venv/bin/python scripts/a2_train_models.py --quick    (tiny grid, fast code check;
                                                                        writes to results/a2_quick, no models saved)
 """
 from __future__ import annotations

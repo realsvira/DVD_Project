@@ -14,9 +14,9 @@ Outputs (suffix _cin1 for --cin 1)
   netlists/circuit/CLA3.cir             netlist (A=5, B=3, Cin=0, corner 0) with .control (--cin 0)
   results/c/cla3_spice_summary.md
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\c1_cla_spice.py --smoke
-      .\\.venv\\Scripts\\python.exe scripts\\c1_cla_spice.py
-      .\\.venv\\Scripts\\python.exe scripts\\c1_cla_spice.py --cin 1
+Run:  .venv/bin/python scripts/c1_cla_spice.py --smoke
+      .venv/bin/python scripts/c1_cla_spice.py
+      .venv/bin/python scripts/c1_cla_spice.py --cin 1
 """
 from __future__ import annotations
 

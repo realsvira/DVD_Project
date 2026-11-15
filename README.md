@@ -15,7 +15,7 @@ Digital VLSI Design course project. The specification is `DVD_ML_PROJECT.pdf`, w
 | Nominal VDD | **1.0 V** (sampled 0.9–1.1 V) |
 | Channel length / widths | L = 45 nm; W = 45–360 nm |
 | Test circuit | **3-bit carry-lookahead adder** (inputs A, B, Cin: all 128 combinations) |
-| Simulator / language | ngspice 44.2 (`ngspice_con.exe`) / Python 3.13.14, Windows 11 |
+| Simulator / language | ngspice (44.2 for the submitted results; 45.2 also verified) / Python ≥ 3.11 (3.13 used), Linux |
 
 ## Final results (final models, independent evaluation data)
 
@@ -32,21 +32,138 @@ Digital VLSI Design course project. The specification is `DVD_ML_PROJECT.pdf`, w
 - **Full report:** [`reports/FINAL_REPORT.md`](reports/FINAL_REPORT.md), with a self-contained HTML copy at `reports/FINAL_REPORT.html` that can be printed to PDF from a browser.
 - **Requirement → file map:** [`reports/deliverables_checklist.md`](reports/deliverables_checklist.md).
 
-## Quick start (Windows PowerShell, from the project root)
+## Quick start (Linux, from the project root)
 
-**New to Python, Git or SPICE?** Follow [`docs/BEGINNER_GUIDE.md`](docs/BEGINNER_GUIDE.md) step by step. The full installation guide is [`docs/INSTALL_WINDOWS.md`](docs/INSTALL_WINDOWS.md).
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-$env:NGSPICE = "C:\Spice64\bin\ngspice_con.exe"          # wherever ngspice_con.exe is
-.\.venv\Scripts\python.exe run_all.py --mode verify        # env check + 92 tests + deliverable audit (~1 min)
-.\.venv\Scripts\python.exe run_all.py --mode smoke         # small end-to-end run of every stage (~3 min)
-.\.venv\Scripts\python.exe run_all.py --list               # all stages; --mode full regenerates everything
+**New to Python, Git or SPICE?** Follow [`docs/BEGINNER_GUIDE.md`](docs/BEGINNER_GUIDE.md) step by step. Full installation details are in [Installation (Linux)](#installation-linux) just below.
+```bash
+sudo dnf install ngspice python3          # Fedora   (Ubuntu/Debian: sudo apt install ngspice python3-venv)
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python run_all.py --mode verify  # env check + 92 tests + deliverable audit (~1 min)
+.venv/bin/python run_all.py --mode smoke   # small end-to-end run of every stage (~3 min)
+.venv/bin/python run_all.py --list         # all stages; --mode full regenerates everything
 ```
 Predict one transistor with the final models (and compare with ngspice):
-```powershell
-.\.venv\Scripts\python.exe scripts\a2_predict.py --device nmos --vd 1.0 --vg 0 --vs 0 --vb 0 --vdd 1.0 --temp 27 --w 90e-9 --spice
+```bash
+.venv/bin/python scripts/a2_predict.py --device nmos --vd 1.0 --vg 0 --vs 0 --vb 0 --vdd 1.0 --temp 27 --w 90e-9 --spice
 ```
+
+## Installation (Linux)
+
+Verified on **Fedora Linux 44 with Python 3.13.16 and ngspice 45.2**. The submitted results were produced with ngspice 44.2; re-simulating samples with 45.2 reproduces the stored currents. Every command below is run in a terminal from the project root (the folder that contains `run_all.py`).
+
+### 1. Prerequisites
+
+| Tool | Version | Notes |
+|---|---|---|
+| Python | ≥ 3.11 (3.13 tested) | needed for `tomllib`; check with `python3 --version` |
+| venv | – | part of Python; on Debian/Ubuntu it is the separate `python3-venv` package |
+| ngspice | 44.2 or newer | from the distribution's package manager; it is not a pip package |
+| Git | any | only to clone the repository |
+
+Install them with your distribution's package manager:
+```bash
+sudo dnf install python3 ngspice git                 # Fedora / RHEL
+sudo apt install python3 python3-venv ngspice git    # Ubuntu / Debian
+sudo pacman -S python ngspice git                    # Arch
+```
+If your distribution's Python is older than 3.11 (for example Ubuntu 22.04), install a newer one first, for example with `uv python install 3.13` or the deadsnakes PPA.
+
+### 2. Get the project
+```bash
+git clone https://github.com/realsvira/DVD_Project.git
+cd DVD_Project
+```
+
+### 3. Check ngspice
+```bash
+ngspice -v
+```
+This should print `ngspice-44.2` or newer. The project runs ngspice in batch mode (`ngspice -b`), so no GUI is involved.
+
+The project looks for ngspice in this order:
+1. the `NGSPICE` environment variable,
+2. `[ngspice].path` in `config/project.toml` (default `/usr/bin/ngspice`),
+3. `ngspice` on PATH.
+
+A package-manager install needs no further setup. If you built ngspice yourself or it lives elsewhere, point the project at it:
+```bash
+export NGSPICE=/opt/ngspice/bin/ngspice                   # current shell only
+echo 'export NGSPICE=/opt/ngspice/bin/ngspice' >> ~/.bashrc   # permanently
+```
+
+### 4. Create the virtual environment and install dependencies
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -r requirements.txt
+```
+To *re-train* the final transistor models you also need PyTorch (CPU build, about 200 MB). The saved models predict without it.
+```bash
+.venv/bin/python -m pip install -r requirements-train.txt
+```
+To type `python` instead of `.venv/bin/python`, activate the environment in each new terminal:
+```bash
+source .venv/bin/activate
+```
+
+### 5. Verify
+```bash
+.venv/bin/python run_all.py --mode verify
+```
+or step by step:
+```bash
+.venv/bin/python scripts/inventory_inputs.py
+.venv/bin/python scripts/check_environment.py
+.venv/bin/python -m pytest -q tests
+```
+Setup succeeded when:
+* `check_environment.py` ends with **`ENVIRONMENT OK`** and exits with code 0 (every line is `[PASS]`);
+* pytest reports all 92 tests passed;
+* the audit prints `12/12 deliverable groups verified`.
+
+Logs are written to `results/run_logs/`.
+
+`check_environment.py` confirms that:
+- Python is new enough and all packages import;
+- the config loads;
+- `models/45nm_HP.pm` exists and its SHA-256 matches the config;
+- both model cards are BSIM4 (level 54) and the nominal vth0/toxe/ndep/u0/xj values parse;
+- ngspice is found and answers `-v`;
+- Python can run an ngspice batch simulation of NMOS OFF and PMOS OFF using the required `.options`;
+- the simulator loaded exactly the file's parameter values (via `showmod`);
+- the four terminal currents of each device sum to ~0 (Kirchhoff's current law);
+- editing a model card (toxe −10 %) raises gate leakage as expected.
+
+Results are also written to `reports/environment_check.txt`.
+
+### 6. Run the project
+
+| Command | What it does | Time |
+|---|---|---|
+| `python run_all.py --list` | lists every stage of every mode | – |
+| `python run_all.py --mode smoke` | small end-to-end check of every stage (writes only to `data/transistor_small`, `results/a2_quick` and smoke files) | ~3 min |
+| `python run_all.py --mode full` | regenerates everything in the original order | many hours (training dominates) |
+| `python run_all.py --mode full --from b3` | resumes from a stage | – |
+| `python run_all.py --mode full --only c1 c2` | runs only selected stages | – |
+
+Here `python` means `.venv/bin/python`, or plain `python` once the venv is activated.
+
+Notes:
+- The generation stages are resumable (saved shards), and the training stages cache every fitted configuration.
+- The three one-time evaluations (A2 test, A2b fresh test, improvement final evaluation) refuse to run a second time. The runner reports them as *skipped (already evaluated)*.
+- The final transistor models (`trained_models/*.joblib`) are part of the repository, so all prediction and evaluation stages run without re-training.
+
+### 7. Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `ngspice: command not found` / `ENVIRONMENT NOT READY` | Install ngspice (step 1) or set `NGSPICE` to its full path (step 3); `check_environment.py` prints where it looked. |
+| `The virtual environment was not created successfully because ensurepip is not available` | Debian/Ubuntu: `sudo apt install python3-venv`, then delete `.venv` and redo step 4. |
+| `ModuleNotFoundError` | Use the venv's Python (`.venv/bin/python`) and reinstall the requirements. |
+| `[FAIL] Model file SHA-256 matches config` | The copy's line endings were converted (for example by `git config core.autocrlf true`). Clone again with `git -c core.autocrlf=false clone ...`. |
+| A one-time evaluation says "refusing to evaluate again" | Expected: those results already exist. Use `--force` only to deliberately repeat it. |
+| A stage says FAILED | Read the last lines of the log it names in `results/run_logs/`. |
 
 ## Stage order (`run_all.py --mode full`)
 
@@ -77,7 +194,7 @@ data/                      datasets and SPICE references (transistor, aug, gates
 trained_models/            final models (*.joblib = v3) + v1/, v2/, v3/, final_before_improvement/
 results/                   per-stage tables and figures; results/final = final-model deliverables
 reports/                   FINAL_REPORT.md/.html, deliverables_checklist.md, stage reports, figures/
-docs/                      INSTALL_WINDOWS.md (installation), BEGINNER_GUIDE.md (step by step from zero)
+docs/                      BEGINNER_GUIDE.md (Linux setup, step by step from zero)
 models/, model/, *.pdf, *.zip, 22n_NMOS_ON.net   supplied inputs (unchanged)
 ```
 `models/*.pm` are SPICE model cards (BSIM4), not ML models. The ML models are in `trained_models/`.
@@ -87,95 +204,6 @@ models/, model/, *.pdf, *.zip, 22n_NMOS_ON.net   supplied inputs (unchanged)
 # Stage details
 
 The sections below document each stage as it was carried out. Numbers quoted inside a stage refer to the models of that stage (v1, v2 and so on); the final numbers are in the table at the top.
-
-## Setup (Windows)
-
-### 1. Check Python
-PowerShell:
-```powershell
-python --version
-```
-You need 3.11 or newer.
-
-### 2. Find ngspice
-`ngspice -v` gives "not recognized" because ngspice is not on PATH. On this machine it is at:
-```
-D:\VLSI\NGSPICE\ngspice-44.2_64\Spice64\bin\ngspice_con.exe
-```
-Use **`ngspice_con.exe`** in a terminal. `ngspice.exe` is the GUI build and opens its own window.
-
-To locate it on another machine:
-```powershell
-Get-ChildItem C:\,D:\ -Recurse -Filter ngspice_con.exe -ErrorAction SilentlyContinue | Select-Object -First 5 FullName
-```
-To verify it:
-```powershell
-& "D:\VLSI\NGSPICE\ngspice-44.2_64\Spice64\bin\ngspice_con.exe" -v
-```
-
-The project does **not** need ngspice on PATH. It looks in this order:
-1. the `NGSPICE` environment variable,
-2. `[ngspice].path` in `config/project.toml`,
-3. `ngspice_con` / `ngspice` on PATH,
-4. common install folders (`C:\Spice64\bin`, ...).
-
-Teammates with a different install location can set the path for one session:
-```powershell
-$env:NGSPICE = "C:\Spice64\bin\ngspice_con.exe"
-```
-Optional: to add it permanently to your **user** PATH (open a new terminal afterwards):
-```powershell
-[Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path","User") + ";C:\Spice64\bin", "User")   # the folder that contains ngspice_con.exe
-```
-
-### 3. Create the virtual environment and install dependencies
-From the project root (the `DVD_Project` folder):
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-If activation is blocked by the execution policy, run this once:
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-```
-Alternatively, skip activation and call `.\.venv\Scripts\python.exe` directly.
-
-CMD equivalent:
-```bat
-python -m venv .venv
-.venv\Scripts\activate.bat
-pip install -r requirements.txt
-```
-
-Or do all of setup in one step:
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1
-```
-
-### 4. Verify
-```powershell
-.\.venv\Scripts\python.exe scripts\inventory_inputs.py
-.\.venv\Scripts\python.exe scripts\check_environment.py
-.\.venv\Scripts\python.exe -m pytest -q tests
-```
-Setup succeeded when:
-* `check_environment.py` ends with **`ENVIRONMENT OK`** and exits with code 0 (every line is `[PASS]`), and
-* pytest reports all tests passed.
-
-`check_environment.py` confirms that:
-- Python is new enough and all packages import;
-- the config loads;
-- `models/45nm_HP.pm` exists and its SHA-256 matches the config;
-- both model cards are BSIM4 (level 54) and the nominal vth0/toxe/ndep/u0/xj values parse;
-- ngspice is found and answers `-v`;
-- Python can run an ngspice batch simulation of NMOS OFF and PMOS OFF using the required `.options`;
-- the simulator loaded exactly the file's parameter values (via `showmod`);
-- the four terminal currents of each device sum to ~0 (Kirchhoff's current law);
-- editing a model card (toxe −10 %) raises gate leakage as expected.
-
-Results are also written to `reports/environment_check.txt`.
 
 ---
 
@@ -241,10 +269,10 @@ That file was used for reference only. Its Linux `.include` path, `GMIN=1e-20` o
 - the model card is embedded, so the netlist contains no paths.
 
 ### Reproduce
-```powershell
-.\.venv\Scripts\python.exe -m pytest -q tests
-.\.venv\Scripts\python.exe scripts\a1_smoke_test.py
-& $env:NGSPICE -b netlists\transistor\nmos_on.cir      # NGSPICE = full path of ngspice_con.exe
+```bash
+.venv/bin/python -m pytest -q tests
+.venv/bin/python scripts/a1_smoke_test.py
+ngspice -b netlists/transistor/nmos_on.cir
 ```
 The smoke-test results go to `results/a1_smoke_test.csv`, `results/a1_corner_sweep.csv` and `reports/a1_smoke_test.md`.
 
@@ -262,15 +290,15 @@ df = simulate_transistors(cfg, "pmos_on", sample_inputs(cfg, "pmos_on", 100))
 
 Script: `scripts/a1_generate_datasets.py`; logic in `src/leakage/dataset.py`.
 
-```powershell
+```bash
 # 20-sample smoke test per case (run after any code change)
-.\.venv\Scripts\python.exe scripts\a1_generate_datasets.py --smoke
-# quick end-to-end run: 200 samples per case into data\transistor_small\
-.\.venv\Scripts\python.exe scripts\a1_generate_datasets.py --small
-# full run: 10,000 valid samples per case into data\transistor\ (smoke test runs first)
-.\.venv\Scripts\python.exe scripts\a1_generate_datasets.py
+.venv/bin/python scripts/a1_generate_datasets.py --smoke
+# quick end-to-end run: 200 samples per case into data/transistor_small/
+.venv/bin/python scripts/a1_generate_datasets.py --small
+# full run: 10,000 valid samples per case into data/transistor/ (smoke test runs first)
+.venv/bin/python scripts/a1_generate_datasets.py
 ```
-Other options: `--cases nmos_off pmos_off`, `--n 2000`, `--out data\tmp`, `--batch 500`,
+Other options: `--cases nmos_off pmos_off`, `--n 2000`, `--out data/tmp`, `--batch 500`,
 `--workers 6`, `--max-extra 200`, `--skip-smoke`, `--no-progress`.
 
 **Sampling** (spec Section 4):
@@ -312,8 +340,8 @@ Other options: `--cases nmos_off pmos_off`, `--n 2000`, `--out data\tmp`, `--bat
 
 ## Part A1: data check (deliverable 3)
 
-```powershell
-.\.venv\Scripts\python.exe scripts\a1_data_check.py
+```bash
+.venv/bin/python scripts/a1_data_check.py
 ```
 This takes about 2 minutes. It reads `data/transistor/` and writes everything to `results/data_check/`:
 
@@ -338,21 +366,21 @@ This takes about 2 minutes. It reads `data/transistor/` and writes everything to
 ## Part A2: ML transistor models
 
 ### Commands
-```powershell
-# train + tune + select + save (about 1.5 h on 12 cores; resumable, results cached in results\a2\tuning\)
-.\.venv\Scripts\python.exe scripts\a2_train_models.py
-# quick code check with a tiny grid (about 2 min; writes results\a2_quick, saves no models)
-.\.venv\Scripts\python.exe scripts\a2_train_models.py --quick
+```bash
+# train + tune + select + save (about 1.5 h on 12 cores; resumable, results cached in results/a2/tuning/)
+.venv/bin/python scripts/a2_train_models.py
+# quick code check with a tiny grid (about 2 min; writes results/a2_quick, saves no models)
+.venv/bin/python scripts/a2_train_models.py --quick
 # ONE-TIME test-set evaluation (refuses to run twice)
-.\.venv\Scripts\python.exe scripts\a2_evaluate_test.py
+.venv/bin/python scripts/a2_evaluate_test.py
 # reload the saved models and predict one transistor (add --spice to compare with ngspice)
-.\.venv\Scripts\python.exe scripts\a2_predict.py --device nmos --vd 1.0 --vg 0 --vs 0 --vb 0 --vdd 1.0 --temp 27 --w 90e-9 --spice
+.venv/bin/python scripts/a2_predict.py --device nmos --vd 1.0 --vg 0 --vs 0 --vb 0 --vdd 1.0 --temp 27 --w 90e-9 --spice
 ```
 From Python:
 ```python
 import sys; sys.path.insert(0, "src")
 from leakage.inference import LeakagePredictor
-lp = LeakagePredictor()                                   # loads trained_models\<case>.joblib
+lp = LeakagePredictor()                                   # loads trained_models/<case>.joblib
 lp.predict("pmos", vd=0.0, vg=1.0, vs=1.0, vb=1.0, vdd=1.0, temp=85, w=180e-9, vth0=-0.47)
 # -> DataFrame: case, id, ig, is, ib (A, positive into the device), extrapolated
 ```
@@ -400,10 +428,10 @@ Plots: `results/a2/fig_pred_vs_spice_<case>.png`. Validation table: `results/a2/
 
 ## Part B step 3: gate-level SPICE references
 
-```powershell
-.\.venv\Scripts\python.exe scripts\b3_gate_spice.py --smoke   # nominal corner + corner 0, 36 sims, ~10 s
-.\.venv\Scripts\python.exe scripts\b3_gate_spice.py           # smoke first, then 18 x 200 = 3,600 sims (~5-12 min)
-& $env:NGSPICE -b netlists\gates\NAND2.cir
+```bash
+.venv/bin/python scripts/b3_gate_spice.py --smoke   # nominal corner + corner 0, 36 sims, ~10 s
+.venv/bin/python scripts/b3_gate_spice.py           # smoke first, then 18 x 200 = 3,600 sims (~5-12 min)
+ngspice -b netlists/gates/NAND2.cir
 ```
 - **Gates** (`src/leakage/gates.py`; topologies are stored as data so Part B step 4 and Part C can reuse them):
   - INV, NAND2, NOR2, and AND2/OR2, which are NAND2/NOR2 followed by an inverter and simulated as one netlist.
@@ -428,8 +456,8 @@ Plots: `results/a2/fig_pred_vs_spice_<case>.png`. Validation table: `results/a2/
 
 ## Part B steps 4–5: hierarchical ML gate leakage
 
-```powershell
-.\.venv\Scripts\python.exe scripts\b4_gate_ml.py      # ~5 s; no SPICE is run
+```bash
+.venv/bin/python scripts/b4_gate_ml.py      # ~5 s; no SPICE is run
 ```
 Reuse it, for example in Part C:
 ```python
@@ -465,12 +493,12 @@ These results use the models of that stage (v2 in all four cases; the final v3 r
 
 ## Part C: 3-bit carry-lookahead adder (assigned test circuit)
 
-```powershell
-.\.venv\Scripts\python.exe -m pytest -q tests\test_circuit.py      # exhaustive Boolean tests (Cin = 0 and 1)
-.\.venv\Scripts\python.exe scripts\c1_cla_spice.py --smoke         # 128 full-circuit sims (~10 s)
-.\.venv\Scripts\python.exe scripts\c1_cla_spice.py                 # Cin = 0 half: smoke + 64 x 200 = 12,800 sims (~16 min)
-.\.venv\Scripts\python.exe scripts\c1_cla_spice.py --cin 1         # Cin = 1 half: 12,800 sims into *_cin1 files (~16 min)
-.\.venv\Scripts\python.exe scripts\c2_cla_ml.py                    # hierarchical ML + evaluation (~30 s)
+```bash
+.venv/bin/python -m pytest -q tests/test_circuit.py      # exhaustive Boolean tests (Cin = 0 and 1)
+.venv/bin/python scripts/c1_cla_spice.py --smoke         # 128 full-circuit sims (~10 s)
+.venv/bin/python scripts/c1_cla_spice.py                 # Cin = 0 half: smoke + 64 x 200 = 12,800 sims (~16 min)
+.venv/bin/python scripts/c1_cla_spice.py --cin 1         # Cin = 1 half: 12,800 sims into *_cin1 files (~16 min)
+.venv/bin/python scripts/c2_cla_ml.py                    # hierarchical ML + evaluation (~30 s)
 ```
 **Circuit** (`src/leakage/circuit.py`, gate list in `data/circuit/cla3_gate_list.csv`, netlist in `netlists/circuit/CLA3.cir`):
 - **Logic:** Gi = Ai·Bi, Pi = Ai⊕Bi, C1 = G0 + P0·C0, C2 = G1 + P1·G0 + P1·P0·C0, C3 = G2 + P2·G1 + P2·P1·G0 + P2·P1·P0·C0, Si = Pi⊕Ci.
@@ -502,13 +530,13 @@ Full report: `reports/improvement_report.md`. The protocol (`results/improve/sel
 - before and after were scored **once** on new, untouched data (fresh transistor tests, plus 200 new corners with seed 5005 and their own gate and CLA SPICE references);
 - original result files and models are preserved. The previous finals are in `trained_models/final_before_improvement/`; Parts B4/C results remain in `results/b4`, `results/c`.
 
-```powershell
-.\.venv\Scripts\python.exe scripts\d1_diagnostics.py                       # error analysis (train/val)
-.\.venv\Scripts\python.exe scripts\d2_experiments.py --exp E1_ens_v2cache E2_torch_same E5_torch_moredata E6_ens_E2_E5
-.\.venv\Scripts\python.exe scripts\d2_experiments.py --select --summary    # -> trained_models\v3
-.\.venv\Scripts\python.exe scripts\d5_op_uniqueness.py --gates data\final_eval\gates data\gates
-.\.venv\Scripts\python.exe scripts\d3_final_eval.py [--refs corrected]     # one-time before/after
-.\.venv\Scripts\python.exe scripts\d4_report.py
+```bash
+.venv/bin/python scripts/d1_diagnostics.py                       # error analysis (train/val)
+.venv/bin/python scripts/d2_experiments.py --exp E1_ens_v2cache E2_torch_same E5_torch_moredata E6_ens_E2_E5
+.venv/bin/python scripts/d2_experiments.py --select --summary    # -> trained_models/v3
+.venv/bin/python scripts/d5_op_uniqueness.py --gates data/final_eval/gates data/gates
+.venv/bin/python scripts/d3_final_eval.py [--refs corrected]     # one-time before/after
+.venv/bin/python scripts/d4_report.py
 ```
 **What limited accuracy:**
 - Every earlier MLP stopped at sklearn's 3,000-iteration L-BFGS cap; training error ≈ validation error, so the models were under-fitted.

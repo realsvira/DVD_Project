@@ -3,7 +3,7 @@
 Outputs: reports/FINAL_REPORT.md, reports/FINAL_REPORT.html (self-contained, print to PDF from
 a browser), reports/figures/*.png (200 dpi copies / renders).
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\z3_build_report.py
+Run:  .venv/bin/python scripts/z3_build_report.py
 """
 from __future__ import annotations
 
@@ -67,8 +67,9 @@ def main() -> int:
     summ = json.loads((R / "final" / "summary.json").read_text(encoding="utf-8"))
     env = (REP / "environment_check.txt").read_text(encoding="utf-8")
 
-    m = re.search(r"Python >= 3\.11\s+--\s+(\S+)", env)
-    py_ver = m.group(1) if m else "?"
+    # The submitted results were produced with Python 3.13.14 / ngspice 44.2 on Windows 11. Keep that fixed:
+    # reports/environment_check.txt describes whichever machine ran the check last, not the production run.
+    py_ver = "3.13.14"
 
     def env_ver(name):
         m = re.search(rf"import {name}\s+--\s+(\S+)", env)
@@ -217,8 +218,13 @@ def main() -> int:
                             "drain": d.d, "gate node": d.g, "source": d.s, "body": d.b}
                            for g in gates.values() for d in g.devices])
 
-    hp_lines = "\n".join(f"* **{a}**: best configuration per case chosen on validation from the grid in "
-                         f"`scripts/a2_train_models.py` (e.g. `{p}`)." for a, p in vc_hp.items())
+    def _hp(a):
+        per = vc[vc.algo == a].groupby("params", sort=False).case.apply(list)
+        if len(per) == 1:
+            return f"`{per.index[0]}` (all four cases)"
+        return "; ".join(f"`{p}` ({', '.join(cs)})" for p, cs in per.items())
+    hp_lines = "\n".join(f"* **{a}**: best configuration per case, chosen on validation from the grid in "
+                         f"`scripts/a2_train_models.py`: {_hp(a)}." for a in vc_hp.index)
     final_desc = ", ".join(f"{c}: {s['selected']}" for c, s in sel.items())
     authors = "Saumya Vira, Anish Toshniwal, Shrenil Patel, Het Selarka"
 
@@ -286,7 +292,7 @@ def main() -> int:
           "effect; figure below); every non-nominal-toxe sample triggers BSIM4's 'toxe ≠ toxp + dtox, "
           "dtox ignored' warning because the specification varies toxe only; OFF-state body current is a nearly constant "
           "~1e-14 A drain-junction current (no junction area/perimeter in the netlists); OFF-state Id flows against Vds in "
-          "28–36 % of samples because channel current and gate-to-drain tunnelling nearly cancel. Full report: "
+          "28–36 % of samples with |Vds| > 0.1 V because channel current and gate-to-drain tunnelling nearly cancel. Full report: "
           "`reports/a1_data_quality_report.md`.", "",
           f"![OFF current vs source offset]({f_trend[3]})", "",
           "## 6. ML model comparison, hyperparameters and selection", "",
@@ -450,7 +456,8 @@ def main() -> int:
           "evaluated once in, the final phase.", "",
           "## 14. Conclusion", "",
           f"A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level. Fitted on "
-          f"49,600 single-transistor SPICE samples (of 64,000 simulated), it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with "
+          f"49,600 single-transistor SPICE samples (of 64,000 generated for model development; a further 20,000 were "
+          f"simulated only as held-out test sets), it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with "
           f"{P(cN['median_err'])} median error and {cN['mean_accuracy_pct']:.2f} % mean accuracy over all {n_vec} input "
           f"combinations, and individual gates with "
           f"{gN['mean_accuracy_pct']:.2f} %, with no SPICE run at prediction time (the gate-internal node voltages "
@@ -469,7 +476,7 @@ def main() -> int:
           "9. D. C. Liu and J. Nocedal, \"On the limited memory BFGS method for large scale optimization,\" *Mathematical "
           "Programming*, vol. 45, pp. 503–528, 1989.", "",
           "## Appendix: reproducibility", "",
-          "`python run_all.py --mode verify | smoke | full` (see `README.md`, `docs/INSTALL_WINDOWS.md`); requirement-to-file "
+          "`python run_all.py --mode verify | smoke | full` (see `README.md`, `docs/BEGINNER_GUIDE.md`); requirement-to-file "
           "map: `reports/deliverables_checklist.md`. Stage reports: `reports/a1_data_quality_report.md`, "
           "`reports/a2_ml_report.md`, `reports/a2b_improvement_report.md`, `reports/b4_gate_ml_report.md`, "
           "`reports/c_cla3_report.md`, `reports/improvement_report.md`.", ""]

@@ -1,7 +1,7 @@
 """Environment check: Python, packages, config, SPICE model file and ngspice.
 
 Run from the project root (with the virtual environment active):
-    python scripts\\check_environment.py
+    python scripts/check_environment.py
 
 Exit code 0 = every required check passed. A summary is also written to
 reports/environment_check.txt.
@@ -40,7 +40,7 @@ def check_python() -> None:
 
 
 REQUIRED_PKGS = ["numpy", "pandas", "scipy", "sklearn", "matplotlib", "joblib",
-                 "xgboost", "lightgbm", "pytest"]
+                 "lightgbm", "pytest"]
 
 
 def check_packages() -> None:

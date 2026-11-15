@@ -9,8 +9,8 @@ Experiments (each result cached in results/improve/experiments/<exp>/<case>.jobl
   E4_ens_torch       mean of E2 with 3 seeds
   LC_<frac>          learning curve: E2 settings on a random fraction of the training data
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\d2_experiments.py --exp E1_ens_v2cache E2_torch_same ...
-      .\\.venv\\Scripts\\python.exe scripts\\d2_experiments.py --summary
+Run:  .venv/bin/python scripts/d2_experiments.py --exp E1_ens_v2cache E2_torch_same ...
+      .venv/bin/python scripts/d2_experiments.py --summary
 """
 from __future__ import annotations
 

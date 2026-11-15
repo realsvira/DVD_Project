@@ -14,7 +14,7 @@ Outputs (results/improve/diagnostics/):
   gate_level_breakdown.csv   (descriptive) B4 error vs T / VDD and dominant devices
   diagnostics.md
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\d1_diagnostics.py
+Run:  .venv/bin/python scripts/d1_diagnostics.py
 """
 from __future__ import annotations
 

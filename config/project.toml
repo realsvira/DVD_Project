@@ -30,10 +30,9 @@ reports            = "reports"
 inputs_extracted   = "inputs/extracted"
 
 [ngspice]
-# Resolution order: NGSPICE environment variable -> this path -> PATH
-# (ngspice_con / ngspice) -> common install folders.
-# ngspice_con.exe is the console build; ngspice.exe opens a GUI window.
-path      = 'D:\VLSI\NGSPICE\ngspice-44.2_64\Spice64\bin\ngspice_con.exe'
+# Resolution order: NGSPICE environment variable -> this path -> `ngspice` on PATH.
+# Distribution packages (dnf / apt / pacman) install it as /usr/bin/ngspice.
+path      = '/usr/bin/ngspice'
 options   = ".options gmin=1e-18 abstol=1e-18 reltol=1e-6 vntol=1e-9"   # required by the spec
 timeout_s = 3600
 workers   = 0      # parallel ngspice processes; 0 = (CPU cores - 1)

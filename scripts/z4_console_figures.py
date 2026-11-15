@@ -9,7 +9,7 @@ Every image shows actual project output (no text is typed by hand):
   screen_verify.png       run_all.py --mode verify summary (results/run_logs/verify_summary.md)
 
 Output: reports/figures/screens/*.png
-Run:  .\\.venv\\Scripts\\python.exe scripts\\z4_console_figures.py
+Run:  .venv/bin/python scripts/z4_console_figures.py
 """
 from __future__ import annotations
 

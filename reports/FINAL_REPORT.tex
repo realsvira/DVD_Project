@@ -40,7 +40,7 @@ All code, datasets, netlists, trained models, result files and this report are a
 \centerline{\large\url{https://github.com/realsvira/DVD_Project}}\\[3pt]
 \code{python run\_all.py -{}-mode verify} checks the environment, runs the 92 automated tests and audits all
 deliverables; \code{-{}-mode full} regenerates everything from the model file with fixed seeds
-(see \code{README.md} and \code{docs/INSTALL\_WINDOWS.md}).
+(see \code{README.md} and \code{docs/BEGINNER\_GUIDE.md}).
 
 \begin{table}[H]
 \centering
@@ -261,7 +261,7 @@ Other findings: OFF current falls about one decade per 0.1\,VDD of source offset
 effect, Fig.~\ref{fig:offset}); every non-nominal \code{toxe} triggers BSIM4's ``toxe $\neq$ toxp + dtox; dtox
 ignored'' warning because the specification varies \code{toxe} only; the OFF-state body current is a nearly
 constant $\sim$1e-14\,A drain-junction current (no junction area/perimeter in the netlists); and the OFF-state
-$I_d$ flows against $V_{ds}$ in 28--36\pct\ of samples because the channel current and gate-to-drain
+$I_d$ flows against $V_{ds}$ in 28--36\pct\ of samples with $|V_{ds}| > 0.1$\,V because the channel current and gate-to-drain
 tunnelling nearly cancel.
 
 \begin{figure}[H]
@@ -338,10 +338,11 @@ PMOS ON & MLP & 0.9973 & 2.57\pct & 16.52\pct \\
 
 Main hyperparameters (best configuration per case, chosen on validation from a grid):
 \begin{itemize}[nosep]
-\item \textbf{MLP}: 3 hidden layers of 128, tanh, L-BFGS, $\alpha = 10^{-5}$;
-\item \textbf{LightGBM}: 4000 trees, learning rate 0.03, 63 leaves;
-\item \textbf{Random forest}: 300 trees, all features per split, minimum leaf size 1;
-\item \textbf{Polynomial ridge}: degree 3, $\alpha = 0.01$.
+\item \textbf{MLP}: 3 hidden layers of 128, tanh, L-BFGS (3000 iterations); $\alpha = 10^{-5}$ for NMOS OFF,
+$\alpha = 10^{-7}$ for NMOS ON, PMOS ON and PMOS OFF;
+\item \textbf{LightGBM}: 4000 trees, learning rate 0.03; 63 leaves for NMOS OFF, 15 leaves for the other three cases;
+\item \textbf{Random forest}: 300 trees, all features per split, minimum leaf size 1 (all cases);
+\item \textbf{Polynomial ridge}: degree 3, $\alpha = 0.01$ (all cases).
 \end{itemize}
 The MLP won every case by 3--5$\times$: the currents are smooth exponential functions of the inputs, which a
 smooth network represents well, while trees give piecewise-constant fits over 11 decades and polynomial ridge
@@ -745,7 +746,8 @@ operating-point uniqueness check should be part of every reference generation.
 
 \section{Conclusion}
 A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level.
-Fitted on 49{,}600 single-transistor SPICE samples (of 64{,}000 simulated), it predicts the 3-bit CLA adder's
+Fitted on 49{,}600 single-transistor SPICE samples (of 64{,}000 generated for model development; a further
+20{,}000 were simulated only as held-out test sets), it predicts the 3-bit CLA adder's
 leakage on unseen PVT corners with 0.58\pct\ median error and \textbf{99.22\pct} mean accuracy over all 128 input
 combinations, and individual gates with 98.93\pct, with no SPICE run at prediction time (the gate-internal node
 voltages come from the gate-level SPICE references). The decisive factors were the signed-log target,

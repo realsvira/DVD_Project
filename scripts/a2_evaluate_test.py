@@ -16,7 +16,7 @@ Outputs (results/a2/)
                                     temperature bins; worst samples
   test_evaluation_record.json       timestamp, model hashes, headline numbers
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\a2_evaluate_test.py
+Run:  .venv/bin/python scripts/a2_evaluate_test.py
 """
 from __future__ import annotations
 

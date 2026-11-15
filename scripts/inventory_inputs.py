@@ -8,7 +8,7 @@
 * Output: reports/input_inventory.md
 
 Run (from the project root):
-    python scripts\\inventory_inputs.py
+    python scripts/inventory_inputs.py
 """
 from __future__ import annotations
 

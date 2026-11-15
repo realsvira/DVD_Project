@@ -58,7 +58,7 @@ The largest residuals (~1e-15 A) occur only when all four currents are tiny; the
 
 ![Gate current vs toxe](figures/fig3_fig_gate_current_vs_toxe.png)
 
-Data-check findings: OFF current falls about one decade per 0.1·VDD of source offset (negative Vgs + body effect; figure below); every non-nominal-toxe sample triggers BSIM4's 'toxe ≠ toxp + dtox, dtox ignored' warning because the specification varies toxe only; OFF-state body current is a nearly constant ~1e-14 A drain-junction current (no junction area/perimeter in the netlists); OFF-state Id flows against Vds in 28–36 % of samples because channel current and gate-to-drain tunnelling nearly cancel. Full report: `reports/a1_data_quality_report.md`.
+Data-check findings: OFF current falls about one decade per 0.1·VDD of source offset (negative Vgs + body effect; figure below); every non-nominal-toxe sample triggers BSIM4's 'toxe ≠ toxp + dtox, dtox ignored' warning because the specification varies toxe only; OFF-state body current is a nearly constant ~1e-14 A drain-junction current (no junction area/perimeter in the netlists); OFF-state Id flows against Vds in 28–36 % of samples with |Vds| > 0.1 V because channel current and gate-to-drain tunnelling nearly cancel. Full report: `reports/a1_data_quality_report.md`.
 
 ![OFF current vs source offset](figures/fig4_fig_supp_off_current_vs_source_offset.png)
 
@@ -100,10 +100,10 @@ Four model types × four cases (validation, best configuration of each type):
 | pmos_on | random_forest | 0.9873 | 26.04 % | 195.66 % |
 | pmos_on | poly_ridge | 0.9614 | 56.43 % | 5289.52 % |
 
-* **lightgbm**: best configuration per case chosen on validation from the grid in `scripts/a2_train_models.py` (e.g. `{"n_estimators": 4000, "learning_rate": 0.03, "num_leaves": 63}`).
-* **mlp**: best configuration per case chosen on validation from the grid in `scripts/a2_train_models.py` (e.g. `{"hidden": [128, 128, 128], "alpha": 1e-05, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}`).
-* **poly_ridge**: best configuration per case chosen on validation from the grid in `scripts/a2_train_models.py` (e.g. `{"degree": 3, "alpha": 0.01}`).
-* **random_forest**: best configuration per case chosen on validation from the grid in `scripts/a2_train_models.py` (e.g. `{"n_estimators": 300, "max_features": 1.0, "min_samples_leaf": 1}`).
+* **lightgbm**: best configuration per case, chosen on validation from the grid in `scripts/a2_train_models.py`: `{"n_estimators": 4000, "learning_rate": 0.03, "num_leaves": 63}` (nmos_off); `{"n_estimators": 4000, "learning_rate": 0.03, "num_leaves": 15}` (nmos_on, pmos_off, pmos_on).
+* **mlp**: best configuration per case, chosen on validation from the grid in `scripts/a2_train_models.py`: `{"hidden": [128, 128, 128], "alpha": 1e-05, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}` (nmos_off); `{"hidden": [128, 128, 128], "alpha": 1e-07, "activation": "tanh", "solver": "lbfgs", "max_iter": 3000}` (nmos_on, pmos_off, pmos_on).
+* **poly_ridge**: best configuration per case, chosen on validation from the grid in `scripts/a2_train_models.py`: `{"degree": 3, "alpha": 0.01}` (all four cases).
+* **random_forest**: best configuration per case, chosen on validation from the grid in `scripts/a2_train_models.py`: `{"n_estimators": 300, "max_features": 1.0, "min_samples_leaf": 1}` (all four cases).
 
 The MLP (tanh, three hidden layers of 128) won every case by 3–5×: the currents are smooth exponential functions of the inputs that a smooth network represents well, while trees give piecewise-constant fits over 11 decades and polynomial ridge cannot follow the exponentials.
 
@@ -333,7 +333,7 @@ Independent data, corrected reference. This comparison was run before the Cin = 
 
 ## 14. Conclusion
 
-A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level. Fitted on 49,600 single-transistor SPICE samples (of 64,000 simulated), it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with 0.58 % median error and 99.22 % mean accuracy over all 128 input combinations, and individual gates with 98.93 %, with no SPICE run at prediction time (the gate-internal node voltages are taken from gate-level SPICE references, §8). The decisive factors were the signed-log target, power-based (Tellegen) gate accounting, fully converged network training, targeted data near the rails, and SPICE reference integrity checks. The 99 % mean-accuracy target is therefore met at circuit level but not at gate or transistor level.
+A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from transistor to circuit level. Fitted on 49,600 single-transistor SPICE samples (of 64,000 generated for model development; a further 20,000 were simulated only as held-out test sets), it predicts the 3-bit carry-lookahead adder's leakage on unseen PVT corners with 0.58 % median error and 99.22 % mean accuracy over all 128 input combinations, and individual gates with 98.93 %, with no SPICE run at prediction time (the gate-internal node voltages are taken from gate-level SPICE references, §8). The decisive factors were the signed-log target, power-based (Tellegen) gate accounting, fully converged network training, targeted data near the rails, and SPICE reference integrity checks. The 99 % mean-accuracy target is therefore met at circuit level but not at gate or transistor level.
 
 ## 15. References
 
@@ -349,4 +349,4 @@ A hierarchical, physics-aware ML flow estimates PVT-dependent leakage from trans
 
 ## Appendix: reproducibility
 
-`python run_all.py --mode verify | smoke | full` (see `README.md`, `docs/INSTALL_WINDOWS.md`); requirement-to-file map: `reports/deliverables_checklist.md`. Stage reports: `reports/a1_data_quality_report.md`, `reports/a2_ml_report.md`, `reports/a2b_improvement_report.md`, `reports/b4_gate_ml_report.md`, `reports/c_cla3_report.md`, `reports/improvement_report.md`.
+`python run_all.py --mode verify | smoke | full` (see `README.md`, `docs/BEGINNER_GUIDE.md`); requirement-to-file map: `reports/deliverables_checklist.md`. Stage reports: `reports/a1_data_quality_report.md`, `reports/a2_ml_report.md`, `reports/a2b_improvement_report.md`, `reports/b4_gate_ml_report.md`, `reports/c_cla3_report.md`, `reports/improvement_report.md`.

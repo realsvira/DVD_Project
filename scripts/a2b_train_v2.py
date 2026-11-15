@@ -22,7 +22,7 @@ Outputs
   trained_models/<case>.joblib      (FINAL model per case = selected one)
   results/a2b/validation_v1_vs_v2.csv/.md, results/a2b/selection.json
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\a2b_train_v2.py
+Run:  .venv/bin/python scripts/a2b_train_v2.py
 """
 from __future__ import annotations
 

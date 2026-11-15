@@ -1,6 +1,7 @@
-# Exact versions tested on Windows 11 with Python 3.13.14 (venv created 2026-11-12).
-# Python >= 3.11 is required (tomllib). ngspice 44.2 is installed separately (not a pip package).
-# Install:  python -m pip install -r requirements.txt
+# Exact versions, verified on Fedora Linux 44 with Python 3.13.16 and ngspice 45.2 (2026-11-15).
+# Python >= 3.11 is required (tomllib). ngspice is installed from the distribution's package
+# manager (it is not a pip package).
+# Install:  .venv/bin/python -m pip install -r requirements.txt
 numpy==2.5.4
 pandas==3.1.1
 scipy==1.18.1
@@ -8,10 +9,9 @@ scikit-learn==1.9.1
 matplotlib==3.11.2
 joblib==1.6.0
 threadpoolctl==3.8.0
-xgboost==3.4.1
 lightgbm==4.7.0
 tqdm==4.70.1
 pytest==9.2.0
 markdown==3.8
 # PyTorch is only needed to RE-TRAIN the final (v3) transistor models; saved models predict with
-# numpy alone. Install it separately (CPU build):  python -m pip install -r requirements-train.txt
+# numpy alone. Install it separately (CPU build):  .venv/bin/python -m pip install -r requirements-train.txt

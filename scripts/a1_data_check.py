@@ -27,7 +27,7 @@ the body bias), by W (8x) and by the other parameters. We therefore
 Partial-regression slopes (OLS of log10|I| on all inputs, standardised) give each
 trend with the other variables held fixed. No SPICE value is modified or dropped.
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\a1_data_check.py
+Run:  .venv/bin/python scripts/a1_data_check.py
 """
 from __future__ import annotations
 

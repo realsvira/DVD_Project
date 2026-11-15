@@ -435,7 +435,7 @@
    "reports/FINAL_REPORT.md",
    "reports/FINAL_REPORT.html",
    "README.md",
-   "docs/INSTALL_WINDOWS.md",
+   "docs/BEGINNER_GUIDE.md",
    "requirements.txt"
   ],
   "ok": true,
@@ -482,7 +482,7 @@
    ],
    [
     true,
-    "Windows install guide"
+    "Linux install guide"
    ],
    [
     true,

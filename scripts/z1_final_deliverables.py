@@ -20,7 +20,7 @@ Pure evaluation/presentation of data that was already evaluated in the improveme
   results/final/fig_cla3_parity.png                 deliverable 8 parity (log axes)
   results/final/summary.json
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\z1_final_deliverables.py
+Run:  .venv/bin/python scripts/z1_final_deliverables.py
 """
 from __future__ import annotations
 

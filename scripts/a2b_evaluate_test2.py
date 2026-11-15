@@ -13,7 +13,7 @@ Outputs (results/a2b/)
   fig_pred_vs_spice_final_targeted_<case>.png final model, targeted fresh test set
   test2_evaluation_record.json       guard + model hashes
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\a2b_evaluate_test2.py
+Run:  .venv/bin/python scripts/a2b_evaluate_test2.py
 """
 from __future__ import annotations
 

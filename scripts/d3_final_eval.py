@@ -15,7 +15,7 @@ Evaluation data
 Outputs: results/improve/final/before_after.csv/.md, per-level tables, parity plots,
          final_eval_record.json (guard: refuses a second run without --force)
 
-Run:  .\\.venv\\Scripts\\python.exe scripts\\d3_final_eval.py
+Run:  .venv/bin/python scripts/d3_final_eval.py
 """
 from __future__ import annotations
 
