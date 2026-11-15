@@ -36,7 +36,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from leakage.circuit import (adder_result, build_cla3, circuit_netlist, circuit_vectors, device_list,  # noqa: E402
                              evaluate, leakage_from_sources, vector_bits)
 from leakage.config import load_config  # noqa: E402
-from leakage.gates import CORNER_COLUMNS, build_gates  # noqa: E402
+from leakage.gates import CORNER_COLUMNS, build_gates, sample_corners  # noqa: E402
 from leakage.simulator import NgspiceSimulator  # noqa: E402
 from leakage.spice import ngspice_version  # noqa: E402
 from leakage.transistor import nominal_process  # noqa: E402
@@ -117,9 +117,17 @@ def main() -> int:
     global OUT, RES
     OUT = (a.out_data or OUT).resolve()
     RES = (a.out_results or RES).resolve()
-    corners = pd.read_csv(a.corners_file)
+    if a.corners_file.is_file():
+        corners, src = pd.read_csv(a.corners_file), a.corners_file.name
+    elif a.smoke:
+        # fresh checkout: the gate SPICE stage (b3) has not written corners.csv yet; the corners are
+        # deterministic, so draw the same ones b3 would (default corner seed)
+        corners, src = sample_corners(CFG), "default corner seed (corners.csv not present)"
+    else:
+        print(f"{a.corners_file} not found: run the gate SPICE stage first (scripts/b3_gate_spice.py)")
+        return 1
     print(f"CLA3: {len(circ.gates)} gates, {len(device_list(CFG, circ))} transistors; ngspice {ver}; "
-          f"corners from data/gates/corners.csv ({len(corners)})")
+          f"corners from {src} ({len(corners)})")
 
     smoke_c = pd.DataFrame([nominal_corner(), corners.iloc[0]])
     s, _ = simulate(circ, smoke_c, sim, "smoke", vids)

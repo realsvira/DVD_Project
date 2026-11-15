@@ -1,6 +1,0 @@
-hierarchical ML for 64 x 200: 1.57 s, subprocess calls attempted: 0
-                                                   comparison     n  spice_median_A  ml_median_A      bias  median_err   p95_err  max_err  mean_accuracy_pct  frac_within_5pct  r2_log10  r2_linear
-             hierarchical ML vs full-circuit SPICE (REPORTED) 12800       1.892e-07    1.847e-07 -0.008073     0.02649    0.1062   0.2628              96.28            0.7371    0.9977     0.9891
-diag: sum of Part B SPICE gate leakages vs full-circuit SPICE 12800       1.892e-07    1.892e-07 -5.72e-05    5.72e-05 0.0004298 0.001121              99.99                 1         1          1
-          diag: hierarchical ML vs sum of SPICE gate leakages 12800       1.892e-07    1.847e-07 -0.007974     0.02654    0.1062   0.2631              96.27             0.737    0.9977      0.989
-spearman: {'temp': 0.413, 'vdd': 0.233, 'n_vth0': 0.057, 'p_vth0': -0.105}

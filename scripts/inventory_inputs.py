@@ -142,7 +142,10 @@ def main() -> int:
     report.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"{len(files)} files inventoried, {len(pm)} distinct .pm models, "
           f"{len(conflicts)} conflicts -> {rel(report)}")
-    return 1 if conflicts or missing else 0
+    if missing:
+        print("not present (optional, not part of the repository): " + ", ".join(missing))
+    # only the assigned model card is required; the other supplied course files are optional
+    return 1 if conflicts or used_hash != cfg.spice_model_sha256 else 0
 
 
 if __name__ == "__main__":

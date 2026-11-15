@@ -1,1 +1,0 @@
-gate,inputs,corner_id,vdd,temp,n_vth0,n_toxe,n_ndep,n_u0,n_xj,p_vth0,p_toxe,p_ndep,p_u0,p_xj,i_leak,p_leak,i_vdd,i_in_a,v_out,expected_out,logic_ok,power_balance_rel,status,messages,i_in_b,v_x,v_y,v_n1,expected_n1

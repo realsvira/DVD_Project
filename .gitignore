@@ -1,4 +1,12 @@
-# Python
+# =====================================================================================
+# Submission scope: the repository tracks only what the specification asks for
+# (Section 6 deliverables) plus the code and inputs needed to regenerate it.
+# Everything else is an intermediate or derived file that
+#     python run_all.py --mode full      (or --mode verify / --mode smoke)
+# writes again, so it is ignored here.
+# =====================================================================================
+
+# Python / tooling
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -9,28 +17,88 @@ venv/
 # Editors / OS
 .vscode/
 .idea/
+*.swp
+*~
 Thumbs.db
 desktop.ini
 .DS_Store
-
-# Regenerable extraction of the supplied archives
-inputs/extracted/
 
 # ngspice scratch output
 *.raw
 *.log
 ngspice_*/
 
-# Generated data: the final datasets in data/transistor/*.csv ARE committed
-# (deliverable 1); intermediate shards and quick test runs are not.
-data/**/_shards/
-data/transistor_small/
-data/tmp/
-data/**/*.tmp
-data/**/*.parquet
-results/a2_quick/
-results/a2b/model_cache/
-!**/.gitkeep
+# LaTeX build artefacts (reports/FINAL_REPORT.tex)
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
 
 # packaged release archives
 dist/
+
+# ---------------------------------------------------------------- supplied course inputs
+# Not deliverables. Only the assigned model card is needed to run the project.
+/*.pdf
+/*.zip
+/22n_NMOS_ON.net
+/model/
+/models/*
+!/models/45nm_HP.pm
+/inputs/
+/docs/
+/figures/
+
+# ---------------------------------------------------------------- data
+# Deliverable 1: the four transistor datasets. Everything else (index files, metadata,
+# splits, targeted/test datasets, gate and CLA SPICE references) is regenerated.
+/data/*
+!/data/transistor/
+/data/transistor/*
+!/data/transistor/nmos_on.csv
+!/data/transistor/nmos_off.csv
+!/data/transistor/pmos_on.csv
+!/data/transistor/pmos_off.csv
+
+# ---------------------------------------------------------------- trained models
+# Deliverable 5: the four final model files. Earlier model versions are regenerated.
+/trained_models/*/
+
+# ---------------------------------------------------------------- results
+/results/*
+# Deliverable 3: Kirchhoff check + three trend plots
+!/results/data_check/
+/results/data_check/*
+!/results/data_check/kcl_summary.csv
+!/results/data_check/fig_off_current_vs_temperature.png
+!/results/data_check/fig_off_current_vs_vth0.png
+!/results/data_check/fig_gate_current_vs_toxe.png
+# Deliverable 4: model comparison table (4 model types x 4 cases)
+!/results/a2/
+/results/a2/*
+!/results/a2/validation_comparison.csv
+!/results/a2/validation_comparison.md
+# Deliverables 5-8: test results, parity plots, gate table + per-record node voltages, CLA table
+!/results/final/
+/results/final/*
+!/results/final/transistor_test_results.csv
+!/results/final/transistor_test_results.md
+!/results/final/fig_transistor_pred_vs_spice_*.png
+!/results/final/gate_18cases_partB.csv
+!/results/final/gate_18cases_partB.md
+!/results/final/gate_predictions_partB.csv
+!/results/final/fig_gate_parity.png
+!/results/final/cla3_results.csv
+!/results/final/cla3_results.md
+!/results/final/fig_cla3_parity.png
+
+# ---------------------------------------------------------------- reports
+# Deliverable 10: the typed report (PDF) and its LaTeX source + figures.
+# Stage reports, the generated Markdown/HTML report, the environment check and the
+# deliverables checklist are written by the scripts.
+/reports/*
+!/reports/FINAL_REPORT.pdf
+!/reports/FINAL_REPORT.tex
+!/reports/figures/

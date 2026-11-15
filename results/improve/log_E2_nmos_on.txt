@@ -1,2 +1,0 @@
-E2_torch_same    nmos_on  score 0.0655  orig 0.0079/0.039  targeted 0.0213/0.978  4613s iters=15000
-EXIT=0

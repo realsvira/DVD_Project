@@ -1,5 +1,0 @@
-data/final_eval/circuit: 0/12800 flagged, max rel diff 1.07e-05 (815s)
-   
-data/circuit: 0/12800 flagged, max rel diff 9.15e-06 (880s)
-   
-EXIT=0

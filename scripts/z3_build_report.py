@@ -476,7 +476,7 @@ def main() -> int:
           "9. D. C. Liu and J. Nocedal, \"On the limited memory BFGS method for large scale optimization,\" *Mathematical "
           "Programming*, vol. 45, pp. 503–528, 1989.", "",
           "## Appendix: reproducibility", "",
-          "`python run_all.py --mode verify | smoke | full` (see `README.md`, `docs/BEGINNER_GUIDE.md`); requirement-to-file "
+          "`python run_all.py --mode verify | smoke | full` (see `README.md`); requirement-to-file "
           "map: `reports/deliverables_checklist.md`. Stage reports: `reports/a1_data_quality_report.md`, "
           "`reports/a2_ml_report.md`, `reports/a2b_improvement_report.md`, `reports/b4_gate_ml_report.md`, "
           "`reports/c_cla3_report.md`, `reports/improvement_report.md`.", ""]

@@ -1,7 +1,0 @@
-set,kind,records,flagged,corrected,max_rel_diff,flagged_list
-data\final_eval\gates,gates,3600,1,1.0,19.285819440508302,AND2 00 c83 (1.070e-08 vs 5.276e-10; device dev default 1.5e+05 / alt 0.0028)
-data\gates,gates,3600,0,0.0,5.5607973844612645e-06,
-data\final_eval\circuit,CLA3,12800,0,,1.0673739828203011e-05,
-data\circuit,CLA3,12800,0,,9.147827641493563e-06,
-data\circuit_cin1,CLA3,12800,0,,1.3602767488336138e-05,
-data\final_eval\circuit_cin1,CLA3,12800,0,,9.297664215888008e-06,
